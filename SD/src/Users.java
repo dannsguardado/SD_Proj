@@ -25,7 +25,6 @@ public class Users implements Serializable {
         return password;
     }
 
-
-
+    public int getUsernameID() { return usernameID; }
 
 }

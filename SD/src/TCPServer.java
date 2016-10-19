@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.Scanner;
 
 /**
@@ -66,6 +67,8 @@ class Connection extends Thread {
     Socket client;
     RMI rmiConnection;
     Users log = null;
+    Auctions auction;
+
 
     public Connection(Socket client, int numero, RMI rmiConnection) {
         try {
@@ -85,17 +88,68 @@ class Connection extends Thread {
     public void run() {
         try {
             while (true) {
-
+                HashMap info;
 
                 int choose;
-                while (log == null) {
-                    choose = dis.readInt();
-                    if (choose == 1) {
-                        log = (Users) ois.readObject();
+
+                while (log == null ) {
+                    info = (HashMap) ois.readObject();
+                    if ("login".compareTo((String)info.get("type"))==0) {
+                        log = new Users((String) info.get("username"),(String)info.get("password"));
                         log = rmiConnection.login(log);
-                        oos.writeObject(log);
+                        if (log == null){
+                            info.put("username",null);
+                            info.put("password",null);
+                        }
+                        else {
+                            info = new HashMap();
+                            info.put("username", log.getName());
+                            info.put("password", log.getPassword());
+                        }
+                        oos.writeObject(info);
                     }
 
+                    else if ("register".compareTo((String) info.get("type")) == 0){
+                        log = new Users ((String) info.get("username"), (String)info.get("password"));
+                        log = rmiConnection.register(log);
+                        info = new HashMap();
+
+                        info.put("username", log.getName());
+                        info.put("password", log.getPassword());
+                        oos.writeObject(info);
+                        oos.flush();
+
+                        if(log.getUsernameID()==-1){
+                            log = null;
+                        }
+                        if (log!= null){
+                            dis.readInt();
+                            log = new Users ((String) info.get("username"), (String)info.get("password"));
+                            log = rmiConnection.login(log);
+                            info.put("username", log.getName());
+                            info.put("password", log.getPassword());
+                            oos.writeObject(info);
+                            oos.flush();
+                        }
+                    }
+                }
+                if (log != null){
+                    info = (HashMap) ois.readObject();
+                    while(true){
+                        if("create_auction".compareTo((String)info.get("type"))== 0){
+                            auction = new Auctions( (int)info.get("code"), (String)info.get("title"), (String)info.get("description"), (int)info.get("amount"));
+                            auction = rmiConnection.create(auction);
+                            info = new HashMap();
+                            System.out.println(auction);
+                            info.put("code", auction.getCode());
+                            info.put("title", auction.getTitle());
+                            info.put("description", auction.getDescription());
+                            info.put("amount", auction.getAmount());
+                            oos.writeObject(info);
+                            oos.flush();
+
+                        }
+                    }
                 }
             }
         } catch (RemoteException e) {

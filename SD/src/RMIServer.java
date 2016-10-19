@@ -63,7 +63,7 @@ public class RMIServer implements RMI {
 
 
     public Users login(Users user) {
-        System.out.println("Login de "+user.getName());
+        System.out.println("\nLogin de "+user.getName());
 
         try {
 
@@ -81,6 +81,54 @@ public class RMIServer implements RMI {
             e.printStackTrace();
         }
     return null;
+    }
+
+    public Users register(Users user){
+        System.out.println("\nRegisto de "+user.getName());
+
+
+        try {
+            query = "SELECT * FROM users WHERE username = ?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, user.getName());
+            ResultSet rs = preparedStatement.executeQuery();
+
+            if (rs.next()){
+                return new Users((-1));
+            }
+
+            query = "INSERT INTO users (username,password) VALUES (?,?)";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, user.getName());
+            preparedStatement.setString(2, user.getPassword());
+            preparedStatement.executeUpdate();
+            user = login(user);
+            return user;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public Auctions create(Auctions auction){
+        System.out.println("\nCriação de leilao");
+        try {
+            query = "INSERT INTO auctions (code, title, description, amount) VALUES (?,?,?,?)";
+            preparedStatement = conn.prepareStatement(query);
+            //preparedStatement.setInt(1, auction);
+            preparedStatement.setInt(1, auction.getCode());
+            preparedStatement.setString(2, auction.getTitle());
+            preparedStatement.setString(3, auction.getDescription());
+            preparedStatement.setInt(4, auction.getAmount());
+            preparedStatement.executeUpdate();
+            return auction;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
 
