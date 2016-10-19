@@ -149,6 +149,11 @@ class Connection extends Thread {
                             oos.flush();
 
                         }
+
+                        /*else if("search_auction".compareTo((String)info.get("type"))==0){
+
+
+                        }*/
                     }
                 }
             }

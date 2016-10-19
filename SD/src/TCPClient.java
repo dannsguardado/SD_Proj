@@ -137,6 +137,7 @@ public class TCPClient {
         while (true) {
             System.out.println("\nMenu!!");
             System.out.println("1 - Criar leilao");
+            System.out.println("2 - Procurar leilao");
 
             System.out.printf("\nOpcao: ");
             String opcao = sc.nextLine();
@@ -148,7 +149,7 @@ public class TCPClient {
                     //Auctions auction = new Auctions();
 
                     int code, amount;
-                    String title, description, code_aux;
+                    String title, description, code_aux, amount_aux;
                     //Date dateLimit;
 
                     System.out.printf("\nCRIAR LEILAO\n");
@@ -170,7 +171,8 @@ public class TCPClient {
 
 
                     System.out.println("\nAmount: ");
-                    amount = sc.nextInt();
+                    amount_aux = sc.nextLine();
+                    amount = Integer.parseInt(amount_aux);
                     //auction.setAmount(sc.nextInt());
 
 
@@ -207,6 +209,32 @@ public class TCPClient {
                     } catch (ClassNotFoundException e) {
                         e.printStackTrace();
                     }
+
+                /*case "2":
+
+                    int searchAuction;
+                    String searchAuction_aux;
+
+                    info = new HashMap();
+                    System.out.println("Code of auction: ");
+                    searchAuction_aux = sc.nextLine();
+                    searchAuction = Integer.parseInt(searchAuction_aux);
+
+                    try {
+                        info.put("type","search_auction");
+                        info.put("code", searchAuction);
+                        oos.writeObject(info);
+                        oos.flush();
+
+
+                        info = (HashMap) ois.readObject();
+
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }*/
             }
         }
     }

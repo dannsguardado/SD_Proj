@@ -29,22 +29,6 @@ public class Auctions implements Serializable {
     }
 
 
-    public void setCode(int code) {
-        this.code = code;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setAmount(int amount) {
-        this.amount = amount;
-    }
-
     public int getCode() { return code; }
     public String getTitle() {
         return title;
