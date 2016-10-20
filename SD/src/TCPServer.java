@@ -27,7 +27,6 @@ public class TCPServer {
                 String path;
 
 
-
                 System.out.println("A Escuta no Porto 6000");
                 ServerSocket listenSocket = new ServerSocket(serverPort);
                 System.out.println("LISTEN SOCKET=" + listenSocket);
@@ -135,12 +134,11 @@ class Connection extends Thread {
                 }
                 if (log != null){
                     info = (HashMap) ois.readObject();
-                    while(true){
+
                         if("create_auction".compareTo((String)info.get("type"))== 0){
                             auction = new Auctions( (int)info.get("code"), (String)info.get("title"), (String)info.get("description"), (int)info.get("amount"));
                             auction = rmiConnection.create(auction);
                             info = new HashMap();
-                            System.out.println(auction);
                             info.put("code", auction.getCode());
                             info.put("title", auction.getTitle());
                             info.put("description", auction.getDescription());
@@ -150,11 +148,22 @@ class Connection extends Thread {
 
                         }
 
-                        /*else if("search_auction".compareTo((String)info.get("type"))==0){
+                        else if("search_auction".compareTo((String)info.get("type"))==0){
+                            auction = new Auctions( (int)info.get("code") );
+                            auction = rmiConnection.search(auction);
+                            info = new HashMap();
+                            info.put("code", auction.getCode());
 
+                            oos.writeObject(info);
 
-                        }*/
-                    }
+                           HashMap newinfo = new HashMap();
+                            newinfo.put("code", auction.getCode());
+                            newinfo.put("title", auction.getTitle());
+                            newinfo.put("description", auction.getDescription());
+                            newinfo.put("amount", auction.getAmount());
+                            oos.writeObject(newinfo);
+                            oos.flush();
+                        }
                 }
             }
         } catch (RemoteException e) {
