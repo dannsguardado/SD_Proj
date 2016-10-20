@@ -11,4 +11,5 @@ public interface RMI extends Remote{
     public Users login(Users user) throws RemoteException;
     public Users register(Users user) throws RemoteException;
     public Auctions create(Auctions auction) throws RemoteException;
+    public Auctions search(Auctions auctions) throws RemoteException;
 }

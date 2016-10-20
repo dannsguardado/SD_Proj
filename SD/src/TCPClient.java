@@ -210,7 +210,7 @@ public class TCPClient {
                         e.printStackTrace();
                     }
 
-                /*case "2":
+                case "2":
 
                     int searchAuction;
                     String searchAuction_aux;
@@ -229,12 +229,16 @@ public class TCPClient {
 
                         info = (HashMap) ois.readObject();
 
+                        HashMap newinfo;
+
+                        newinfo = (HashMap) ois.readObject();
+                        System.out.println(newinfo.get("code") + " " + newinfo.get("title") + " " + newinfo.get("description") + " " + newinfo.get("amount"));
 
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (ClassNotFoundException e) {
                         e.printStackTrace();
-                    }*/
+                    }
             }
         }
     }

@@ -28,6 +28,10 @@ public class Auctions implements Serializable {
         //this.dateLimit = dateLimit;
     }
 
+    public Auctions(int code){
+        this.code = code;
+    }
+
 
     public int getCode() { return code; }
     public String getTitle() {
