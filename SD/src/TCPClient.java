@@ -211,7 +211,7 @@ public class TCPClient {
                     }
 
                 case "2":
-
+                    System.out.println("asdfhj");
                     int searchAuction;
                     String searchAuction_aux;
 
