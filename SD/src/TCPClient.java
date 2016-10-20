@@ -26,14 +26,11 @@ public class TCPClient {
             oos = new ObjectOutputStream(dos);
             ois = new ObjectInputStream(dis);
             while (true) {
-                System.out.print("Funcao:");
                 in = sc.nextLine();
                 if (in.compareTo("login") == 0) {
                     login();
                 } else if (in.compareTo("register") == 0) {
                     register();
-                } else if (in.compareTo("close") == 0) {
-                    return;
                 }
                 System.out.println(dis.readUTF());
             }
