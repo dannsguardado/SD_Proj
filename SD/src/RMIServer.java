@@ -44,7 +44,7 @@ public class RMIServer implements RMI {
         System.getProperties().put("java.security.policy", "politicas.policy");
         //System.setSecurityManager(new SecurityManager());
         int port = 1099;
-        String name = "ola";
+        String name = "ibei";
         try
         {
             RMI rmi = new RMIServer();
