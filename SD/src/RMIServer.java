@@ -131,11 +131,34 @@ public class RMIServer implements RMI {
         return null;
     }
 
+    public Auctions search(Auctions auction){
+        System.out.println("Search leilao");
+        try {
+            query = "SELECT * FROM auctions WHERE code = ?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setInt(1, auction.getCode());
+            ResultSet rs = preparedStatement.executeQuery();
+            if(rs.next())
+            {
+
+                Auctions newauction = new Auctions(rs.getInt("code"), rs.getString("title"), rs.getString("description"), rs.getInt("amount"));
+                return newauction;
+            }
+
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    return null;
+    }
+
 
 
     private void BDconnect()
     {
-        String dataBase = "jdbc:mysql://localhost/bd";
+        String dataBase = "jdbc:mysql://localhost/ibeibd";
         String userdb = "root";
         String passdb = "";
         try
