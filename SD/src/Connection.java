@@ -1,17 +1,14 @@
 import java.io.*;
 import java.net.Socket;
-import java.util.*;
 import java.rmi.RemoteException;
+import java.util.*;
 
 /**
  * Created by henriquecabral on 21/10/16.
  */
 public class Connection extends Thread {
-    DataInputStream dis;
-    DataOutputStream dos;
-    ObjectInputStream ois;
-    ObjectOutputStream oos;
-
+    BufferedReader inFromClient;
+    PrintWriter outToClient;
     int numeroLigacao;
     Socket client;
     RMI rmiConnection;
@@ -24,10 +21,8 @@ public class Connection extends Thread {
             this.client = client;
             this.numeroLigacao = numeroLigacao;
             this.rmiConnection = rmiConnection;
-            this.dis = new DataInputStream(client.getInputStream());
-            this.dos = new DataOutputStream(client.getOutputStream());
-            this.oos = new ObjectOutputStream(dos);
-            this.ois = new ObjectInputStream(dis);
+            this.inFromClient = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            this.outToClient = new PrintWriter(client.getOutputStream(), true);
             this.start();
         } catch (IOException e) {
             e.printStackTrace();
@@ -36,82 +31,73 @@ public class Connection extends Thread {
 
     public void run() {
         try {
-            while (true) {
-                HashMap info;
+            String messageFromClient;
+            HashMap<String,String> info = new HashMap<>();
 
-                int choose;
-
-                while (log == null ) {
-                    info = (HashMap) ois.readObject();
-                    if ("login".compareTo((String)info.get("type"))==0) {
-                        log = new Users((String) info.get("username"),(String)info.get("password"));
-                        log = rmiConnection.login(log);
-                        if (log == null){
-                            info.put("username",null);
-                            info.put("password",null);
-                        }
-                        else {
-                            info = new HashMap();
-                            info.put("username", log.getName());
-                            info.put("password", log.getPassword());
-                        }
-                        oos.writeObject(info);
+            while (!client.isClosed()) {
+                while ((messageFromClient = inFromClient.readLine()) != null) {
+                    System.out.println(messageFromClient);
+                    String[] keyValuePairs = messageFromClient.split(", ");
+                    for(String pair : keyValuePairs) {
+                        String[] entry = pair.split(": ");
+                        info.put(entry[0].trim(), entry[1].trim());
+                        System.out.printf(info.toString()); // TESTE DE IMPRESSÃO de HASHMAP
                     }
-
-                    else if ("register".compareTo((String) info.get("type")) == 0){
-                        log = new Users ((String) info.get("username"), (String)info.get("password"));
-                        log = rmiConnection.register(log);
-                        info = new HashMap();
-
-                        info.put("username", log.getName());
-                        info.put("password", log.getPassword());
-                        oos.writeObject(info);
-                        oos.flush();
-
-                        if(log.getUsernameID()==-1){
-                            log = null;
-                        }
-                        if (log!= null){
-                            dis.readInt();
-                            log = new Users ((String) info.get("username"), (String)info.get("password"));
-                            log = rmiConnection.login(log);
-                            info.put("username", log.getName());
-                            info.put("password", log.getPassword());
-                            oos.writeObject(info);
-                            oos.flush();
-                        }
-                    }
-                }
-                if (log != null){
-                    info = (HashMap) ois.readObject();
-                    while(true){
-                        if("create_auction".compareTo((String)info.get("type"))== 0){
-                            auction = new Auctions( (int)info.get("code"), (String)info.get("title"), (String)info.get("description"), (int)info.get("amount"));
-                            auction = rmiConnection.create(auction);
-                            info = new HashMap();
-                            System.out.println(auction);
-                            info.put("code", auction.getCode());
-                            info.put("title", auction.getTitle());
-                            info.put("description", auction.getDescription());
-                            info.put("amount", auction.getAmount());
-                            oos.writeObject(info);
-                            oos.flush();
-
-                        }
-
-                        /*else if("search_auction".compareTo((String)info.get("type"))==0){
-
-
-                        }*/
-                    }
+                    makeThings(info);
                 }
             }
         } catch (RemoteException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         }
+    }
+    public void makeThings(HashMap<String,String> info) {
+        if (log == null) {
+            if ("login".compareTo(info.get("type")) == 0) {
+                log = new Users(info.get("username"), info.get("password"));
+                try {
+                    log = rmiConnection.login(log);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+                if (log == null)
+                    outToClient.println("type: login, ok: false\n");
+                else
+                    outToClient.println("type: login, ok: true\n");
+
+            } else if ("register".compareTo(info.get("type")) == 0) {
+                log = new Users(info.get("username"), info.get("password"));
+                try {
+                    log = rmiConnection.register(log);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+                if (log.getUsernameID() == -1)
+                    outToClient.println("type: register, ok: false\n");
+                else
+                    outToClient.println("type: register, ok: true\n");
+                log = null;
+            }
+        }
+            /*if (log != null) {
+                if("create_auction".compareTo((String)info.get("type"))== 0) {
+                    auction = new Auctions( (int)info.get("code"), (String)info.get("title"), (String)info.get("description"), (int)info.get("amount"));
+                    auction = rmiConnection.create(auction);
+                    info = new HashMap();
+                    System.out.println(auction);
+                    info.put("code", (String)auction.getCode());
+                    info.put("title", auction.getTitle());
+                    info.put("description", auction.getDescription());
+                    info.put("amount", (String)auction.getAmount());
+                }
+
+                        /*else if("search_auction".compareTo((String)info.get("type"))==0){
+
+
+                        }
+
+                }
+            }*/
     }
 }
