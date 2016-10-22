@@ -17,8 +17,6 @@ public class TCPServer {
         Scanner sc = new Scanner(System.in);
         try {
 <<<<<<< HEAD
-=======
-<<<<<<< HEAD
             int serverPort = 6000; //porto=6000
             int serverNumber;
 
@@ -69,7 +67,6 @@ class Connection extends Thread {
     Auctions auction;
 
 =======
->>>>>>> master
             int serverPort = 6000; //porto de recepção de ligações
             int rmiPort = 1099; // porto de ligação RMI
             String rmiName = "ibei";
@@ -83,10 +80,6 @@ class Connection extends Thread {
             System.out.println("LISTEN SOCKET=" + listenSocket);
             System.out.print("IP do RMI:");
             rmiIp = sc.nextLine();
-<<<<<<< HEAD
-
-            while (true) {
-=======
 >>>>>>> client_feature_branch
 
             while (true) {
@@ -170,7 +163,6 @@ class Connection extends Thread {
                         }
                 }
 =======
->>>>>>> master
                 Socket clientSocket = listenSocket.accept();
                 System.getProperties().put("java.security.policy", "politicas.policy");
                 String name = "rmi://" + rmiIp + ":" + rmiPort + "/" + rmiName;
@@ -180,10 +172,7 @@ class Connection extends Thread {
                 numeroLigacoes++;
                 // Inicio de uma nova thread para tratar os clientes
                 new Connection(clientSocket, numeroLigacoes, rmiConnection);
-<<<<<<< HEAD
-=======
 >>>>>>> client_feature_branch
->>>>>>> master
             }
 
         } catch (IOException e) {
