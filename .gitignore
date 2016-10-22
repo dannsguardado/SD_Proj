@@ -1,4 +1,12 @@
 
-SD/.idea/workspace.xml
-
 *.xml
+
+*.class
+
+SD/out/production/SD/Connection.class
+
+*.class
+
+SD/out/production/SD/TCPServer.class
+
+SD/out/production/SD/TCPClient.class
