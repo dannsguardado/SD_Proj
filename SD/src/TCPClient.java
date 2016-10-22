@@ -50,6 +50,8 @@ class TCPClient {
                 System.out.println(messageFromServer);
         } catch (IOException e) {
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -214,12 +216,16 @@ class TCPClient {
                     }
             }
 =======
+>>>>>>> master
             if(inFromServer == null)
                 System.out.println("\nUsage: java TCPClient <host> <port>\n");
             System.out.println(e.getMessage());
         } finally {
             try { inFromServer.close(); } catch (Exception e) {}
+<<<<<<< HEAD
+=======
 >>>>>>> client_feature_branch
+>>>>>>> master
         }
     }
 }
