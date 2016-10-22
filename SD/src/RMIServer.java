@@ -63,30 +63,27 @@ public class RMIServer implements RMI {
 
 
     public Users login(Users user) {
-        System.out.println("\nLogin de "+user.getName());
+
 
         try {
 
             query = "SELECT id, username, password FROM users WHERE username=? AND password=?";
-        preparedStatement = conn.prepareStatement(query);
-        preparedStatement.setString(1, user.getName());
-        preparedStatement.setString(2, user.getPassword());
-        ResultSet rs = preparedStatement.executeQuery();
-        if(rs.next())
-        {
-            Users newUser = new Users(user.getName(),user.getPassword());
-            return newUser;
-        }
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, user.getName());
+            preparedStatement.setString(2, user.getPassword());
+            ResultSet rs = preparedStatement.executeQuery();
+            if(rs.next()) {
+                Users newUser = new Users(user.getName(),user.getPassword());
+                System.out.println("\nLogin de "+user.getName());
+                return newUser;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    return null;
+        return null;
     }
 
     public Users register(Users user){
-        System.out.println("\nRegisto de "+user.getName());
-
-
         try {
             query = "SELECT * FROM users WHERE username = ?";
             preparedStatement = conn.prepareStatement(query);
@@ -102,7 +99,7 @@ public class RMIServer implements RMI {
             preparedStatement.setString(1, user.getName());
             preparedStatement.setString(2, user.getPassword());
             preparedStatement.executeUpdate();
-            user = login(user);
+            System.out.println("\nRegisto de "+user.getName());
             return user;
 
         } catch (SQLException e) {
@@ -146,7 +143,6 @@ public class RMIServer implements RMI {
             }
 
 
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -158,7 +154,7 @@ public class RMIServer implements RMI {
 
     private void BDconnect()
     {
-        String dataBase = "jdbc:mysql://localhost/ibeibd";
+        String dataBase = "jdbc:mysql://localhost/bd";
         String userdb = "root";
         String passdb = "";
         try

@@ -36,7 +36,6 @@ public class Connection extends Thread {
 
             while (!client.isClosed()) {
                 while ((messageFromClient = inFromClient.readLine()) != null) {
-                    System.out.println(messageFromClient);
                     String[] keyValuePairs = messageFromClient.split(", ");
                     for(String pair : keyValuePairs) {
                         String[] entry = pair.split(": ");
