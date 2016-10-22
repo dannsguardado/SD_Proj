@@ -115,10 +115,10 @@ public class RMIServer implements RMI {
             query = "INSERT INTO auctions (code, title, description, amount) VALUES (?,?,?,?)";
             preparedStatement = conn.prepareStatement(query);
             //preparedStatement.setInt(1, auction);
-            preparedStatement.setInt(1, auction.getCode());
+            preparedStatement.setLong(1, auction.getCode());
             preparedStatement.setString(2, auction.getTitle());
             preparedStatement.setString(3, auction.getDescription());
-            preparedStatement.setInt(4, auction.getAmount());
+            preparedStatement.setFloat(4, auction.getAmount());
             preparedStatement.executeUpdate();
             return auction;
         } catch (SQLException e) {
@@ -133,7 +133,7 @@ public class RMIServer implements RMI {
         try {
             query = "SELECT * FROM auctions WHERE code = ?";
             preparedStatement = conn.prepareStatement(query);
-            preparedStatement.setInt(1, auction.getCode());
+            preparedStatement.setLong(1, auction.getCode());
             ResultSet rs = preparedStatement.executeQuery();
             if(rs.next())
             {

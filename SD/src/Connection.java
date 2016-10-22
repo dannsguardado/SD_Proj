@@ -12,7 +12,7 @@ public class Connection extends Thread {
     int numeroLigacao;
     Socket client;
     RMI rmiConnection;
-    Users log = null;
+    Users userLog = null;
     Auctions auction;
 
 
@@ -40,9 +40,10 @@ public class Connection extends Thread {
                     for(String pair : keyValuePairs) {
                         String[] entry = pair.split(": ");
                         info.put(entry[0].trim(), entry[1].trim());
-                        System.out.printf(info.toString()); // TESTE DE IMPRESSÃO de HASHMAP
                     }
+                    System.out.println(info);
                     makeThings(info);
+                    info.clear();
                 }
             }
         } catch (RemoteException e) {
@@ -52,51 +53,58 @@ public class Connection extends Thread {
         }
     }
     public void makeThings(HashMap<String,String> info) {
-        if (log == null) {
+        if (userLog == null) {
             if ("login".compareTo(info.get("type")) == 0) {
-                log = new Users(info.get("username"), info.get("password"));
+                userLog = new Users(info.get("username"), info.get("password"));
                 try {
-                    log = rmiConnection.login(log);
+                    userLog = rmiConnection.login(userLog);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
-                if (log == null)
+                if (userLog == null)
                     outToClient.println("type: login, ok: false\n");
                 else
                     outToClient.println("type: login, ok: true\n");
 
             } else if ("register".compareTo(info.get("type")) == 0) {
-                log = new Users(info.get("username"), info.get("password"));
+                userLog = new Users(info.get("username"), info.get("password"));
                 try {
-                    log = rmiConnection.register(log);
+                    userLog = rmiConnection.register(userLog);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
-                if (log.getUsernameID() == -1)
+                if (userLog.getUsernameID() == -1)
                     outToClient.println("type: register, ok: false\n");
                 else
                     outToClient.println("type: register, ok: true\n");
-                log = null;
+                userLog = null;
             }
         }
-            /*if (log != null) {
-                if("create_auction".compareTo((String)info.get("type"))== 0) {
-                    auction = new Auctions( (int)info.get("code"), (String)info.get("title"), (String)info.get("description"), (int)info.get("amount"));
-                    auction = rmiConnection.create(auction);
-                    info = new HashMap();
-                    System.out.println(auction);
-                    info.put("code", (String)auction.getCode());
-                    info.put("title", auction.getTitle());
-                    info.put("description", auction.getDescription());
-                    info.put("amount", (String)auction.getAmount());
+        else
+        {
+            switch(info.get("type")) {
+                case "create_auction": {
+                    auction = new Auctions(Long.parseLong(info.get("code")), info.get("title"), info.get("description"), Float.parseFloat(info.get("amount")));
+                    try {
+                        auction = rmiConnection.create(auction);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    outToClient.println("type: create_auction, ok: true");
                 }
+                case "search_auction": {
 
-                        /*else if("search_auction".compareTo((String)info.get("type"))==0){
-
-
-                        }
 
                 }
-            }*/
+                case "": {
+
+                }
+                default:
+                {
+                    outToClient.println("type: undefined, msg: verifique se o comando tem um type possível");
+                }
+
+            }
+        }
     }
 }

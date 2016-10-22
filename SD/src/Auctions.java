@@ -8,10 +8,10 @@ public class Auctions implements Serializable {
 
     private Users user;
     private int auctionID;
-    private int code;
+    private long code;
     private String title;
     private String description;
-    private int amount;
+    private float amount;
     //private Date dateLimit;
 
     public Auctions(Users user, int auctionID){
@@ -20,7 +20,7 @@ public class Auctions implements Serializable {
 
     }
 
-    public Auctions(int code, String title, String description, int amount){
+    public Auctions(long code, String title, String description, float amount){
         this.code = code;
         this.title = title;
         this.description = description;
@@ -28,18 +28,18 @@ public class Auctions implements Serializable {
         //this.dateLimit = dateLimit;
     }
 
-    public Auctions(int code){
+    public Auctions(long code){
         this.code = code;
     }
 
 
-    public int getCode() { return code; }
+    public long getCode() { return code; }
     public String getTitle() {
         return title;
     }
     public String getDescription() {
         return description;
     }
-    public int getAmount() { return amount; }
+    public float getAmount() { return amount; }
 
 }
