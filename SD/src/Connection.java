@@ -80,7 +80,7 @@ public class Connection extends Thread {
                 userLog = null;
             }
         }
-        else
+        else if(userLog != null && userLog.getUsernameID()!= -1)
         {
             switch(info.get("type")) {
                 case "create_auction": {
@@ -91,17 +91,46 @@ public class Connection extends Thread {
                         e.printStackTrace();
                     }
                     outToClient.println("type: create_auction, ok: true");
+                    break;
                 }
                 case "search_auction": {
 
-
+                    break;
                 }
-                case "": {
-
+                case "detail_auction": {
+                    break;
                 }
-                default:
-                {
+                case "my_auctions": {
+                    break;
+                }
+                case "bid": {
+                    break;
+                }
+                case "edit_auction": {
+                    break;
+                }
+                case "message": {
+                    break;
+                }
+                case "online_users": {
+                    break;
+                }
+                // ESTE SÂO APENAS PARA OS ADMIN'S!!!!
+                case "cancel_auction": {
+                    break;
+                }
+                case "ban_user": {
+                    break;
+                }
+                case "server_stats": {
+                    break;
+                }
+                case "server_test": {
+                    break;
+                }
+                default: {
                     outToClient.println("type: undefined, msg: verifique se o comando tem um type possível");
+                    break;
                 }
 
             }
