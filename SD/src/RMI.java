@@ -1,15 +1,17 @@
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 
 /**
  * Created by ritaalmeida on 18/10/16.
  */
 public interface RMI extends Remote{
 
-    public String printTest() throws RemoteException;
-    public String printNone() throws RemoteException;
-    public Users login(Users user) throws RemoteException;
-    public Users register(Users user) throws RemoteException;
-    public Auctions create(Auctions auction) throws RemoteException;
-    public Auctions search(Auctions auctions) throws RemoteException;
+    String printTest() throws RemoteException;
+    String printNone() throws RemoteException;
+    Users login(Users user) throws RemoteException;
+    Users register(Users user) throws RemoteException;
+    Auctions create(Auctions auction) throws RemoteException;
+    Auctions detail(Long code) throws RemoteException;
+    ArrayList<Auctions> search(Long code) throws RemoteException;
 }

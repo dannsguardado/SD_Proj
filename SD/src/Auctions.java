@@ -6,25 +6,38 @@ import java.sql.Date;
  */
 public class Auctions implements Serializable {
 
-    private Users user;
+    private String username;
     private int auctionID;
     private long code;
     private String title;
     private String description;
     private float amount;
-    //private Date dateLimit;
+    private int dataLimite;
+    private int datacriacao;
+    private int ativo;
 
-    public Auctions(Users user, int auctionID){
-        this.user = user;
-        this.auctionID = auctionID;
-
-    }
-
-    public Auctions(long code, String title, String description, float amount){
+    public Auctions( long code, String title, String description, float amount, String user){
         this.code = code;
         this.title = title;
         this.description = description;
         this.amount = amount;
+        this.username = user;
+        this.datacriacao = 11;
+        this.ativo = 1;
+        this.dataLimite = 15;
+        //this.dateLimit = dateLimit;
+    }
+
+    public Auctions(int auctionID, long code, String title, String description, float amount, String user){
+        this.auctionID = auctionID;
+        this.code = code;
+        this.title = title;
+        this.description = description;
+        this.amount = amount;
+        this.username = user;
+        this.datacriacao = 11;
+        this.ativo = 1;
+        this.dataLimite = 15;
         //this.dateLimit = dateLimit;
     }
 
@@ -32,7 +45,7 @@ public class Auctions implements Serializable {
         this.code = code;
     }
 
-
+    public int getAuctionID(){ return auctionID; }
     public long getCode() { return code; }
     public String getTitle() {
         return title;
@@ -41,5 +54,16 @@ public class Auctions implements Serializable {
         return description;
     }
     public float getAmount() { return amount; }
+    public int getDatacriacao() {
+        return datacriacao;
+    }
+    public int getDataLimite() {
+        return dataLimite;
+    }
+    public float getAtivo() { return ativo; }
+    public String getAuctionUsername() {
+        return username;
+    }
+
 
 }

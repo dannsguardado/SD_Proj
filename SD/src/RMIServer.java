@@ -1,4 +1,3 @@
-import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -10,6 +9,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class RMIServer implements RMI {
 
@@ -63,11 +63,9 @@ public class RMIServer implements RMI {
 
 
     public Users login(Users user) {
-
-
         try {
 
-            query = "SELECT id, username, password FROM users WHERE username=? AND password=?";
+            query = "SELECT nameuser, passworduser FROM user WHERE nameuser=? AND passworduser=?";
             preparedStatement = conn.prepareStatement(query);
             preparedStatement.setString(1, user.getName());
             preparedStatement.setString(2, user.getPassword());
@@ -85,7 +83,7 @@ public class RMIServer implements RMI {
 
     public Users register(Users user){
         try {
-            query = "SELECT * FROM users WHERE username = ?";
+            query = "SELECT * FROM user WHERE nameuser = ?";
             preparedStatement = conn.prepareStatement(query);
             preparedStatement.setString(1, user.getName());
             ResultSet rs = preparedStatement.executeQuery();
@@ -94,7 +92,7 @@ public class RMIServer implements RMI {
                 return new Users((-1));
             }
 
-            query = "INSERT INTO users (username,password) VALUES (?,?)";
+            query = "INSERT INTO user (nameuser,passworduser) VALUES (?,?)";
             preparedStatement = conn.prepareStatement(query);
             preparedStatement.setString(1, user.getName());
             preparedStatement.setString(2, user.getPassword());
@@ -110,15 +108,19 @@ public class RMIServer implements RMI {
     }
 
     public Auctions create(Auctions auction){
-        System.out.println("\nCriação de leilao");
+        System.out.println("\nCriação de leilao"); //ATENCAO AS DATAS
         try {
-            query = "INSERT INTO auctions (code, title, description, amount) VALUES (?,?,?,?)";
+            query = "INSERT INTO leilao (idartigoleilao,datacriacaoleilao,dataterminoleilao,ativoleilao, tituloleilao, descricaoleilao, precomaximoleilao, user_nameuser) VALUES (?,?,?,?,?,?,?,?)";
             preparedStatement = conn.prepareStatement(query);
             //preparedStatement.setInt(1, auction);
             preparedStatement.setLong(1, auction.getCode());
-            preparedStatement.setString(2, auction.getTitle());
-            preparedStatement.setString(3, auction.getDescription());
-            preparedStatement.setFloat(4, auction.getAmount());
+            preparedStatement.setLong(2, auction.getDatacriacao());
+            preparedStatement.setLong(3, auction.getDataLimite());
+            preparedStatement.setFloat(4, auction.getAtivo());
+            preparedStatement.setString(5, auction.getTitle());
+            preparedStatement.setString(6, auction.getDescription());
+            preparedStatement.setFloat(7, auction.getAmount());
+            preparedStatement.setString(8, auction.getAuctionUsername());
             preparedStatement.executeUpdate();
             return auction;
         } catch (SQLException e) {
@@ -128,33 +130,57 @@ public class RMIServer implements RMI {
         return null;
     }
 
-    public Auctions search(Auctions auction){
+    public ArrayList<Auctions> search(Long code){
         System.out.println("Search leilao");
+        ArrayList<Auctions> auctions = new ArrayList<Auctions>();
         try {
-            query = "SELECT * FROM auctions WHERE code = ?";
+            query = "SELECT * FROM leilao WHERE idartigoleilao = ?";
             preparedStatement = conn.prepareStatement(query);
-            preparedStatement.setLong(1, auction.getCode());
+            preparedStatement.setLong(1, code);
+            ResultSet rs = preparedStatement.executeQuery();
+
+            while(rs.next()) {
+                auctions.add(new Auctions(rs.getInt("idleilao"), rs.getLong("idartigoleilao") , rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser")));
+            }
+            if(auctions.size()!=0){
+                return auctions;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public Auctions detail(Long code){
+        System.out.println("Detail leilao");
+        Auctions auction = null;
+        try {
+            query = "SELECT * FROM leilao WHERE idleilao = ?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setLong(1, code);
             ResultSet rs = preparedStatement.executeQuery();
             if(rs.next())
             {
-
-                Auctions newauction = new Auctions(rs.getInt("code"), rs.getString("title"), rs.getString("description"), rs.getInt("amount"));
-                return newauction;
+                auction= new Auctions(rs.getInt("idleilao"), rs.getLong("idartigoleilao") , rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"));
             }
+
+            return auction;
 
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-    return null;
+    return auction;
     }
 
 
 
     private void BDconnect()
     {
-        String dataBase = "jdbc:mysql://localhost/bd";
+        String dataBase = "jdbc:mysql://localhost/ibeibd";
         String userdb = "root";
         String passdb = "";
         try

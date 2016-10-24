@@ -1,0 +1,7 @@
+type: login, username: manuel, password: 123
+
+type: create_auction, code: 123, title: ola1, description: mequie, amount: 10
+
+type: detail_auction, id: 1
+
+type: search_auction, code: 123
