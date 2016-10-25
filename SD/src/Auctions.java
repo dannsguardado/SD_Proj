@@ -6,7 +6,6 @@ import java.sql.Date;
  */
 public class Auctions implements Serializable {
 
-    private String username;
     private int auctionID;
     private long code;
     private String title;
@@ -15,30 +14,33 @@ public class Auctions implements Serializable {
     private int dataLimite;
     private int datacriacao;
     private int ativo;
+    private String auction_username;
 
-    public Auctions( long code, String title, String description, float amount, String user){
+    public Auctions( long code, String title, String description, float amount, String auction_username){
         this.code = code;
         this.title = title;
         this.description = description;
         this.amount = amount;
-        this.username = user;
         this.datacriacao = 11;
         this.ativo = 1;
         this.dataLimite = 15;
+        this.auction_username = auction_username;
         //this.dateLimit = dateLimit;
+
     }
 
-    public Auctions(int auctionID, long code, String title, String description, float amount, String user){
-        this.auctionID = auctionID;
+    public Auctions( long code, String title, String description, float amount, String auction_username, int auctionID){
         this.code = code;
         this.title = title;
         this.description = description;
         this.amount = amount;
-        this.username = user;
         this.datacriacao = 11;
         this.ativo = 1;
         this.dataLimite = 15;
+        this.auction_username = auction_username;
+        this.auctionID = auctionID;
         //this.dateLimit = dateLimit;
+
     }
 
     public Auctions(long code){
@@ -61,9 +63,8 @@ public class Auctions implements Serializable {
         return dataLimite;
     }
     public float getAtivo() { return ativo; }
-    public String getAuctionUsername() {
-        return username;
-    }
+    public String getAuction_username(){return auction_username;}
+
 
 
 }

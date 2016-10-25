@@ -1,6 +1,7 @@
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by ritaalmeida on 18/10/16.
@@ -11,7 +12,12 @@ public interface RMI extends Remote{
     String printNone() throws RemoteException;
     Users login(Users user) throws RemoteException;
     Users register(Users user) throws RemoteException;
-    Auctions create(Auctions auction) throws RemoteException;
+    Auctions create(Auctions auction, int id) throws RemoteException;
     Auctions detail(Long code) throws RemoteException;
     ArrayList<Auctions> search(Long code) throws RemoteException;
+    ArrayList<Auctions> myauctions(String name) throws RemoteException;
+    Auctions editAuction(Auctions auction, HashMap<String, String> info) throws RemoteException;
+    void logs(Users user, int on) throws RemoteException;
+    ArrayList<Users> onlineUsers() throws RemoteException;
+    Auctions cancelAuction(Auctions auction) throws RemoteException;
 }

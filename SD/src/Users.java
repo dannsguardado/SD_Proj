@@ -7,15 +7,21 @@ public class Users implements Serializable {
     private int usernameID;
     private String name;
     private String password;
+    int isAdmin;
 
     public Users (int usernameID){
+        this.usernameID = usernameID;
+    }
+
+    public Users (String name, String password,int usernameID){
+        this.name = name;
+        this.password = password;
         this.usernameID = usernameID;
     }
 
     public Users (String name, String password){
         this.name = name;
         this.password = password;
-        this.usernameID = -1;
     }
 
     public String getName() {
@@ -27,5 +33,9 @@ public class Users implements Serializable {
     }
 
     public int getUsernameID() { return usernameID; }
+
+    public int getIsAdmin() { return isAdmin; }
+    public void setIsAdmin(int i) { isAdmin= i; }
+
 
 }
