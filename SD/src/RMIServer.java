@@ -1,14 +1,10 @@
-
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
+import java.sql.*;
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -66,13 +62,13 @@ public class RMIServer implements RMI {
     public Users login(Users user) {
         try {
 
-            query = "SELECT nameuser, passworduser, isadminuser FROM user WHERE nameuser=? AND passworduser=?";
+            query = "SELECT nameuser, passworduser, isadminuser, banuser FROM user WHERE nameuser=? AND passworduser=?";
             preparedStatement = conn.prepareStatement(query);
             preparedStatement.setString(1, user.getName());
             preparedStatement.setString(2, user.getPassword());
             ResultSet rs = preparedStatement.executeQuery();
             if(rs.next()) {
-                Users newUser = new Users(user.getName(),user.getPassword());
+                Users newUser = new Users(user.getName(), rs.getInt("banuser"),user.getPassword());
                 newUser.setIsAdmin(rs.getInt("isadminuser"));
                 logs(newUser, 1);
                 System.out.println("\nLogin de "+user.getName());
@@ -108,11 +104,12 @@ public class RMIServer implements RMI {
                 return new Users((-1));
             }
 
-            query = "INSERT INTO user (nameuser,passworduser, isadminuser) VALUES (?,?, ?)";
+            query = "INSERT INTO user (nameuser,passworduser, isadminuser, banuser) VALUES (?,?,?,?)";
             preparedStatement = conn.prepareStatement(query);
             preparedStatement.setString(1, user.getName());
             preparedStatement.setString(2, user.getPassword());
             preparedStatement.setInt(3, user.getIsAdmin());
+            preparedStatement.setInt(4, 0);
             preparedStatement.executeUpdate();
             System.out.println("\nRegisto de "+user.getName());
             return user;
@@ -127,12 +124,11 @@ public class RMIServer implements RMI {
     public Auctions create(Auctions auction, int id){
         System.out.println("\nCriação de leilao"); //ATENCAO AS DATAS
         try {
-            System.out.println("O "+ auction.getAuction_username() + " criou um leilao");
             query = "INSERT INTO leilao (idartigoleilao,datacriacaoleilao,dataterminoleilao,ativoleilao, tituloleilao, descricaoleilao, precomaximoleilao, user_nameuser) VALUES (?,?,?,?,?,?,?,?)";
             preparedStatement = conn.prepareStatement(query);
             preparedStatement.setLong(1, auction.getCode());
-            preparedStatement.setLong(2, auction.getDatacriacao());
-            preparedStatement.setLong(3, auction.getDataLimite());
+            preparedStatement.setTimestamp(2, auction.getDatacriacao());
+            preparedStatement.setTimestamp(3, auction.getDataLimite());
             preparedStatement.setFloat(4, auction.getAtivo());
             preparedStatement.setString(5, auction.getTitle());
             preparedStatement.setString(6, auction.getDescription());
@@ -157,7 +153,7 @@ public class RMIServer implements RMI {
             ResultSet rs = preparedStatement.executeQuery();
 
             while(rs.next()) {
-                auctions.add(new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao")));
+                auctions.add(new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao"), new java.sql.Timestamp ( rs.getLong("dataterminoleilao"))));
             }
             if(auctions.size()!=0){
                 return auctions;
@@ -174,14 +170,13 @@ public class RMIServer implements RMI {
         System.out.println("Detail leilao");
         Auctions auction = null;
         try {
-            System.out.println("tens next ------");
             query = "SELECT * FROM leilao WHERE idleilao = ?";
             preparedStatement = conn.prepareStatement(query);
             preparedStatement.setLong(1, code);
             ResultSet rs = preparedStatement.executeQuery();
             if(rs.next())
             {
-                auction= new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao"));
+                auction= new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao"), new java.sql.Timestamp(rs.getLong("dataterminoleilao")));
             }
 
             return auction;
@@ -201,7 +196,7 @@ public class RMIServer implements RMI {
             ResultSet rs = preparedStatement.executeQuery();
 
             while(rs.next()) {
-                auctions.add(new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao")));
+                    auctions.add(new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao"), new java.sql.Timestamp ( rs.getLong("dataterminoleilao"))));
             }
             System.out.println(auctions.size());
             if(auctions.size()!=0){
@@ -218,10 +213,12 @@ public class RMIServer implements RMI {
         System.out.println("Editar leilao ");
         try {
             if(info.get("deadline")!=null){
-                System.out.println("editar deadline para"+ info + " com id "+auction.getAuctionID());
+                System.out.println("editar deadline para"+ info + " com id ");//auction.getAuctionID());
                 query = "UPDATE leilao SET dataterminoleilao = ? WHERE idleilao = ? ";
                 preparedStatement = conn.prepareStatement(query);
-                preparedStatement.setInt(1, Integer.parseInt(info.get("deadline")));
+                Timestamp dataLimite =  java.sql.Timestamp.valueOf (info.get("deadline").concat(":0"));
+                preparedStatement.setTimestamp(1,dataLimite);
+
             }
             else if(info.get("amount")!=null) {
                 query = "UPDATE leilao SET precomaximoleilao = ? WHERE idleilao = ? ";
@@ -278,6 +275,94 @@ public class RMIServer implements RMI {
             preparedStatement.setInt(2, auction.getAuctionID());
             preparedStatement.executeUpdate();
             return auction;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String banUser(String user){
+        ArrayList <Auctions> auctionsUser = myauctions(user);
+        for(int i = 0; i < auctionsUser.size(); i++){
+            cancelAuction(auctionsUser.get(i));
+        }
+        //actualizar banUser BD
+        try{
+            query = "UPDATE user SET banuser = ? WHERE nameuser = ? ";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setInt(1, 1);
+
+            preparedStatement.setString(2, user);
+            preparedStatement.executeUpdate();
+            deleteBid(user);
+            return user;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Bid makeBid(String username, long idLeilao, int amount){
+
+        System.out.println("\nCriação de licitacao");
+        if(detail(idLeilao).getAtivo()== 0){ // protecao de valor de bid ja ultrapassado e leilao activo
+            Bid bid = bestBid(idLeilao);
+            System.out.println("leilao ativo");
+            if(bid==null){
+                System.out.println("primeira licitacao");
+                return createBid(username, idLeilao, amount);
+            }
+            else if(bid.getValor()>amount){
+                return createBid(username, idLeilao, amount);
+            }
+        }
+        return null;
+    }
+    private Bid createBid(String username, long idLeilao, int amount){
+        try {
+            query = "INSERT INTO licitacao (valorlicitacao,user_nameuser,leilao_idleilao) VALUES (?,?,?)";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setInt(1, amount);
+            preparedStatement.setString(2, username);
+            preparedStatement.setLong(3, idLeilao);
+            preparedStatement.executeUpdate();
+            Bid bid = new Bid(amount, username, idLeilao);
+            return bid;
+        } catch (SQLException e) {
+            e.printStackTrace();
+    }
+    return null;
+    }
+
+    public String deleteBid(String username){
+        System.out.println("\nApagar licitacao"); //ATENCAO AS DATAS
+        try {
+            query = "DELETE FROM licitacao WHERE user_nameuser=?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, username);
+            preparedStatement.executeUpdate();
+            return username;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Bid bestBid(long id){
+        System.out.println("\nMelhor licitacao");
+        Bid bid = null;
+        try {
+            query = "SELECT * FROM licitacao WHERE leilao_idleilao=?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setLong(1, id);
+            ResultSet rs = preparedStatement.executeQuery();
+            if(rs.next()) {
+                bid = new Bid(rs.getInt("idlicitacao"), rs.getInt("valorlicitacao"), rs.getString("user_nameuser"), id);
+                if (rs.next() && bid.getValor() > rs.getInt("valorlicitacao")) {
+                    bid = new Bid(rs.getInt("idlicitacao"), rs.getInt("valorlicitacao"), rs.getString("user_nameuser"), id);
+                }
+            }
+            return bid;
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.Socket;
 import java.rmi.RemoteException;
+import java.sql.Timestamp;
 import java.util.*;
 
 /**
@@ -67,8 +68,11 @@ public class Connection extends Thread {
                 }
                 if (userLog == null)
                     outToClient.println("type: login, ok: false\n");
+                else if(userLog.getIsBan()==1){
+                    userLog = null;
+                    outToClient.println("type: login, ok: You have been banned\n");
+                }
                 else {
-                    System.out.println("és admin mano ?? "+ userLog.getIsAdmin());
                     outToClient.println("type: login, ok: true\n");
                 }
 
@@ -97,12 +101,11 @@ public class Connection extends Thread {
                 userLog = null;
             }
         }else if (userLog != null&& userLog.getUsernameID() != -1 ) {
-            System.out.println("ola");
             switch (info.get("type")) {
                 case "create_auction": {
-                    System.out.println("O "+ userLog.getName()+ " criou um leilao");
-
-                    auction = new Auctions(Long.parseLong(info.get("code")), info.get("title"), info.get("description"), Float.parseFloat(info.get("amount")), userLog.getName());
+                    Timestamp dataLimite =  java.sql.Timestamp.valueOf (info.get("deadline").concat(":0"));
+                    System.out.println("o que o mano criou foi "+ dataLimite);
+                    auction = new Auctions(Long.parseLong(info.get("code")), info.get("title"), info.get("description"), Float.parseFloat(info.get("amount")), userLog.getName(), dataLimite);
                     try {
                         System.out.println(userLog.getUsernameID());
                         auction = rmiConnection.create(auction, userLog.getUsernameID());
@@ -149,7 +152,6 @@ public class Connection extends Thread {
                     } else { //FALTA AQUI ADD INFO DE BID E DATAS
                         outToClient.println("type: detail_auction, title: " + auction.getTitle() + " description: " + auction.getDescription());
                     }
-
                     break;
                 }
                 case "my_auctions": {
@@ -183,6 +185,19 @@ public class Connection extends Thread {
                     break;
                 }
                 case "bid": {
+                    Bid bid = null;
+                    try {
+                        bid = rmiConnection.makeBid(userLog.getName(), Integer.parseInt(info.get("id")), Integer.parseInt(info.get("amount")));
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    if (bid == null){
+                        outToClient.println("type: bid, ok: false");
+                    }
+                    else {
+                        outToClient.println("type: bid, ok: true");
+                    }
+
                     break;
                 }
                 case "edit_auction": {
@@ -229,7 +244,6 @@ public class Connection extends Thread {
 
                 // ESTE SÂO APENAS PARA OS ADMIN'S!!!!
                 case "cancel_auction": {
-                    System.out.println("és admin mano ?? "+ userLog.getIsAdmin());
                     if(userLog.getIsAdmin() == 1){
                         auction = findAuctionByID(info);
                         try {
@@ -250,6 +264,23 @@ public class Connection extends Thread {
                     break;
                 }
                 case "ban_user": {
+                    System.out.println("bora banir maninhos");
+                    if(userLog.getIsAdmin() == 1){
+                        String userBan = info.get("username");
+                        try {
+                            userBan = rmiConnection.banUser(userBan);
+                            if (userBan == null) {
+                                outToClient.println("type: ban_user, ok: false");
+                            } else {
+                                outToClient.println("type: ban_user, ok: true");
+                            }
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    else {
+                        outToClient.println("type: ban_user, ok: No premission");
+                    }
                     break;
                 }
                 case "server_stats": {
@@ -261,6 +292,7 @@ public class Connection extends Thread {
                 case "exit":{
                     try{
                         rmiConnection.logs(userLog, 0);
+                        userLog = null;
                     }catch (RemoteException e) {
                         e.printStackTrace();
                     }
@@ -284,12 +316,15 @@ public class Connection extends Thread {
 
     private Auctions findAuctionByID(HashMap<String, String> info){
         try {
-           return rmiConnection.detail(Long.parseLong(info.get("id")));
+            Auctions aux = rmiConnection.detail(Long.parseLong(info.get("id")));
+           if(aux !=null){
+               System.out.println("Encontrou correctamente a accao");
+           }
+           return aux;
         } catch (RemoteException e) {
             e.printStackTrace();
         }
         return null;
-
     }
 }
 

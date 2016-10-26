@@ -20,4 +20,7 @@ public interface RMI extends Remote{
     void logs(Users user, int on) throws RemoteException;
     ArrayList<Users> onlineUsers() throws RemoteException;
     Auctions cancelAuction(Auctions auction) throws RemoteException;
+    String banUser(String user) throws RemoteException;
+    Bid makeBid(String username, long idLeilao, int amount) throws RemoteException;
+    String deleteBid(String username) throws RemoteException;
 }
