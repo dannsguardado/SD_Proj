@@ -391,7 +391,8 @@ public class RMIServer implements RMI {
     public Bid makeBid(String username, long idLeilao, int amount){
 
         System.out.println("\nCriação de licitacao");
-        if(detail(idLeilao).getAtivo()== 0){ // protecao de valor de bid ja ultrapassado e leilao activo
+        if(detail(idLeilao).getAtivo()== 1){ // protecao de valor de bid ja ultrapassado e leilao activo
+
             Bid bid = bestBid(idLeilao);
             System.out.println("leilao ativo");
             if(bid==null){
@@ -399,6 +400,7 @@ public class RMIServer implements RMI {
                 return createBid(username, idLeilao, amount);
             }
             else if(bid.getValor()>amount){
+
                 return createBid(username, idLeilao, amount);
             }
         }

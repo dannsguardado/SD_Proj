@@ -227,13 +227,12 @@ public class Connection extends Thread {
                         } catch (RemoteException e) {
                             rmiConnection = rmi_conn.getRmiConnection();
                         }
-
-                    }
-                    if (bid == null){
-                        outToClient.println("type: bid, ok: false");
-                    }
-                    else {
-                        outToClient.println("type: bid, ok: true");
+                        if (bid == null){
+                            outToClient.println("type: bid, ok: false");
+                        }
+                        else {
+                            outToClient.println("type: bid, ok: true");
+                        }
                     }
 
                     break;
@@ -246,17 +245,18 @@ public class Connection extends Thread {
                         try {
                             String aux = null;
 
-                            auction = rmiConnection.editAuction(auction,info);
+                            auction = rmiConnection.editAuction(auction, info);
                             made_request = true;
+
+                        }catch (RemoteException e) {
+                                rmiConnection = rmi_conn.getRmiConnection();
+                            }
+
                             if (auction == null) {
                                 outToClient.println("type: edit_auction, ok: false");
                             } else {
                                 outToClient.println("type: edit_auction, ok: true");
                             }
-
-                        } catch (RemoteException e) {
-                            rmiConnection = rmi_conn.getRmiConnection();
-                        }
 
                     }
                     break;
