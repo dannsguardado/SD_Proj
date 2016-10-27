@@ -8,6 +8,7 @@ import java.util.HashMap;
  */
 public interface RMI extends Remote{
 
+    String testRMI() throws RemoteException;
     String printTest() throws RemoteException;
     String printNone() throws RemoteException;
     Users login(Users user) throws RemoteException;
@@ -20,4 +21,7 @@ public interface RMI extends Remote{
     void logs(Users user, int on) throws RemoteException;
     ArrayList<Users> onlineUsers() throws RemoteException;
     Auctions cancelAuction(Auctions auction) throws RemoteException;
+    String banUser(String user) throws RemoteException;
+    Bid makeBid(String username, long idLeilao, int amount) throws RemoteException;
+    String deleteBid(String username) throws RemoteException;
 }

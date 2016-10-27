@@ -1,5 +1,6 @@
 import java.io.Serializable;
-import java.sql.Date;
+import java.util.Date;
+import java.lang.String;
 
 /**
  * Created by ritaalmeida on 18/10/16.
@@ -11,36 +12,38 @@ public class Auctions implements Serializable {
     private String title;
     private String description;
     private float amount;
-    private int dataLimite;
-    private int datacriacao;
+    private java.sql.Timestamp dataLimite;
+    private java.sql.Timestamp datacriacao;
     private int ativo;
     private String auction_username;
 
-    public Auctions( long code, String title, String description, float amount, String auction_username){
+    public Auctions( long code, String title, String description, float amount, String auction_username, java.sql.Timestamp dataLimite){
         this.code = code;
         this.title = title;
         this.description = description;
         this.amount = amount;
-        this.datacriacao = 11;
         this.ativo = 1;
-        this.dataLimite = 15;
+        this.dataLimite = dataLimite;
         this.auction_username = auction_username;
         //this.dateLimit = dateLimit;
+        Date date = new Date();
+        datacriacao = new java.sql.Timestamp(date.getTime());
+        System.out.println("create data limite: "+ dataLimite);
 
     }
 
-    public Auctions( long code, String title, String description, float amount, String auction_username, int auctionID){
+    public Auctions( long code, String title, String description, float amount, String auction_username, int auctionID, java.sql.Timestamp dataLimite){
         this.code = code;
         this.title = title;
         this.description = description;
         this.amount = amount;
-        this.datacriacao = 11;
+        Date date = new Date();
+        
+        datacriacao = new java.sql.Timestamp(date.getTime());
         this.ativo = 1;
-        this.dataLimite = 15;
         this.auction_username = auction_username;
         this.auctionID = auctionID;
-        //this.dateLimit = dateLimit;
-
+        this.dataLimite = dataLimite;
     }
 
     public Auctions(long code){
@@ -56,10 +59,10 @@ public class Auctions implements Serializable {
         return description;
     }
     public float getAmount() { return amount; }
-    public int getDatacriacao() {
+    public java.sql.Timestamp getDatacriacao() {
         return datacriacao;
     }
-    public int getDataLimite() {
+    public java.sql.Timestamp getDataLimite() {
         return dataLimite;
     }
     public float getAtivo() { return ativo; }
