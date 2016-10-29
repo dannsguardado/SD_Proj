@@ -6,6 +6,7 @@ import java.util.*;
 
 
 public class Connection extends Thread {
+
     BufferedReader inFromClient;
     PrintWriter outToClient;
     int numeroLigacao;
@@ -34,11 +35,11 @@ public class Connection extends Thread {
     }
 
     public void run() {
-        int numeroLigados = 0;
         try {
             String messageFromClient;
             HashMap<String, String> info = new HashMap<>();
             if (!client.isClosed()) {
+
 
                 while ((messageFromClient = inFromClient.readLine()) != null) {
                     System.out.println(messageFromClient);
@@ -48,15 +49,23 @@ public class Connection extends Thread {
                         info.put(entry[0].trim(), entry[1].trim());
                     }
                     System.out.println(info);
+
+                    numeroLigacao++;
                     makeThings(info);
                     info.clear();
                 }
-                numeroLigados++;
+                /*try{
+                    outToClient.println("Clientes ligados: "+clients.size());
+                    sleep(60000);
+                    //outToClient.println("Clientes ligados: "+clients.size());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }*/
 
             }
+
             rmiConnection.logs(userLog, 0);
-            //tirar do array
-            numeroLigados--;
+            clients.remove(this.outToClient);
 
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -66,7 +75,7 @@ public class Connection extends Thread {
         try {
             sleep(2000);
         } catch (InterruptedException e) {
-            System.out.println("cenas ya------   " + numeroLigados);
+            e.printStackTrace();
         }
 
     }
@@ -108,7 +117,6 @@ public class Connection extends Thread {
                         rmiConnection = rmi_conn.getRmiConnection();
                     }
                 }
-                //FALTA VERIFICAR SE OO USERNAME JA EXISTE
                 outToClient.println("type: register, ok: true\n");
                 userLog = null;
             }
@@ -128,7 +136,7 @@ public class Connection extends Thread {
                 outToClient.println("type: register, ok: true\n");
                 userLog = null;
             }
-        }else if (userLog != null ) { //&& userLog.getUsernameID() != -1
+        }else if (userLog != null ) {
             switch (info.get("type")) {
                 case "create_auction": {
                     made_request = false;
@@ -417,6 +425,7 @@ public class Connection extends Thread {
                     }
                     break;
                 }
+
                 default: {
                     outToClient.println("type: undefined, msg: verifique se o comando tem um type possível");
                     break;
@@ -424,6 +433,11 @@ public class Connection extends Thread {
 
             }
         }
+        /*try {
+            rmiConnection.updateActiveAuctions();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }*/
     }
 
     private String printBids(ArrayList<Bid> bids){

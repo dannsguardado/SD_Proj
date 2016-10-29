@@ -12,6 +12,8 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.util.*;
 
+import static java.lang.Thread.sleep;
+
 public class RMIServer implements RMI {
 
     private Connection conn = null;
@@ -19,7 +21,7 @@ public class RMIServer implements RMI {
     private PreparedStatement preparedStatement = null;
     private static int number_rmi;
 
-    public RMIServer() throws RemoteException{
+    public RMIServer() throws RemoteException {
         super();
         BDconnect();
 
@@ -29,59 +31,69 @@ public class RMIServer implements RMI {
    * Esta função serve apenas para uma primeira impressão de teste para que se possa verificar
    * que o Servidor Primário se conectou ao RMI
    * **/
-    public String printTest() throws RemoteException
-    {
-        System.out.println("Connected to TCP Server");
-        return "Connected to RMI";
-    }
+//    public String printTest() throws RemoteException
+//    {
+//        System.out.println("Connected to TCP Server");
+//        return "Connected to RMI";
+//    }
 
     public String printNone() throws RemoteException {
         return ">>>Testing connection<<<";
     }
 
-    public String testRMI() throws RemoteException
-    {
+    public String testRMI() throws RemoteException {
         return "RMI Primary alive";
     }
 
 
-
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        if(args.length==0)
-        {
+        if (args.length == 0) {
             System.out.print("RMI number: ");
             number_rmi = sc.nextInt();
-        }
-        else
-        {
+        } else {
             number_rmi = Integer.parseInt(args[0]);
         }
         System.getProperties().put("java.security.policy", "politicas.policy");
         //System.setSecurityManager(new SecurityManager());
         int port = 1099;
         String name = "ibei";
-        if(number_rmi==1)
-        {
-            try
-            {
+        if (number_rmi == 1) {
+            try {
                 RMI rmi = new RMIServer();
-                RMI stub = (RMI) UnicastRemoteObject.exportObject(rmi,0);
+                RMI stub = (RMI) UnicastRemoteObject.exportObject(rmi, 0);
                 Registry regis = LocateRegistry.createRegistry(port);
                 regis.rebind(name, stub);
                 System.out.println("RMI Server Up!");
-            }
-            catch(Exception e)
-            {
+                new Thread() {
+                    public void run() {
+                        while (true) {
+                            try {
+                                rmi.updateActiveAuctions();
+                            } catch (RemoteException e) {
+                                e.printStackTrace();
+                            }
+                            try {
+                                sleep(30000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }.start();
+
+                System.out.println("ola");
+
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-        else
-        {
+        } else {
             new RMISecondaryConnection(port, name).start();
         }
+        System.out.println("ola2");
 
     }
+
 
     static class RMISecondaryConnection extends Thread
     {
@@ -112,6 +124,7 @@ public class RMIServer implements RMI {
                     while(true)
                     {
                         System.out.println(rmiConnection.testRMI());
+
                         try
                         {
                             this.sleep(1000);
@@ -142,6 +155,20 @@ public class RMIServer implements RMI {
             }
         }
     }
+    public void updateActiveAuctions(){
+
+            try {
+                query = "UPDATE leilao SET ativoleilao = 0 WHERE dataterminoleilao < now()";
+                preparedStatement = conn.prepareStatement(query);
+                preparedStatement.executeUpdate();
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+    }
+
+
 
 
     public Users login(Users user) {
@@ -405,20 +432,39 @@ public class RMIServer implements RMI {
         return null;
     }
     private Bid createBid(String username, long idLeilao, float amount){
+        if (checkActive(idLeilao)){
+            try {
+                query = "INSERT INTO licitacao (valorlicitacao,user_nameuser,leilao_idleilao) VALUES (?,?,?)";
+                preparedStatement = conn.prepareStatement(query);
+                preparedStatement.setFloat(1, amount);
+                preparedStatement.setString(2, username);
+                preparedStatement.setLong(3, idLeilao);
+                preparedStatement.executeUpdate();
+                Bid bid = new Bid(amount, username, idLeilao);
+                return bid;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+    private Boolean checkActive(long idleilao){
         try {
-            query = "INSERT INTO licitacao (valorlicitacao,user_nameuser,leilao_idleilao) VALUES (?,?,?)";
+            query = "SELECT * FROM leilao WHERE idleilao = ?";
             preparedStatement = conn.prepareStatement(query);
-            preparedStatement.setFloat(1, amount);
-            preparedStatement.setString(2, username);
-            preparedStatement.setLong(3, idLeilao);
-            preparedStatement.executeUpdate();
-            Bid bid = new Bid(amount, username, idLeilao);
-            return bid;
+            preparedStatement.setFloat(1, idleilao);
+            ResultSet rs = preparedStatement.executeQuery();
+
+            if(rs.next() && rs.getInt("ativoleilao")== 1) {
+                return true;
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+        return false;
     }
-    return null;
-    }
+
 
     public String deleteBid(String username){
         System.out.println("\nApagar licitacao"); //ATENCAO AS DATAS
