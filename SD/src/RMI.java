@@ -22,6 +22,13 @@ public interface RMI extends Remote{
     ArrayList<Users> onlineUsers() throws RemoteException;
     Auctions cancelAuction(Auctions auction) throws RemoteException;
     String banUser(String user) throws RemoteException;
-    Bid makeBid(String username, long idLeilao, int amount) throws RemoteException;
+    Bid makeBid(String username, long idLeilao, float amount) throws RemoteException;
     String deleteBid(String username) throws RemoteException;
+    Message createMessage(String mensagem, long idleilao, String username) throws RemoteException;
+    ArrayList<Bid> allUserBids(Users user) throws  RemoteException;
+    ArrayList<Message>allMessagesBid(Auctions auction) throws RemoteException;
+    String topAuctionsCreated() throws RemoteException;
+    String topSold() throws RemoteException;
+    String topLast() throws RemoteException;
+
 }

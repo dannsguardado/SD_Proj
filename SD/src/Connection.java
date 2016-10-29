@@ -4,9 +4,7 @@ import java.rmi.RemoteException;
 import java.sql.Timestamp;
 import java.util.*;
 
-/**
- * Created by henriquecabral on 21/10/16.
- */
+
 public class Connection extends Thread {
     BufferedReader inFromClient;
     PrintWriter outToClient;
@@ -36,10 +34,12 @@ public class Connection extends Thread {
     }
 
     public void run() {
+        int numeroLigados = 0;
         try {
             String messageFromClient;
             HashMap<String, String> info = new HashMap<>();
-            while (!client.isClosed()) {
+            if (!client.isClosed()) {
+
                 while ((messageFromClient = inFromClient.readLine()) != null) {
                     System.out.println(messageFromClient);
                     String[] keyValuePairs = messageFromClient.split(", ");
@@ -51,14 +51,24 @@ public class Connection extends Thread {
                     makeThings(info);
                     info.clear();
                 }
+                numeroLigados++;
+
             }
-            //rmiConnection.logs(userLog, 0);
+            rmiConnection.logs(userLog, 0);
+            //tirar do array
+            numeroLigados--;
 
         } catch (RemoteException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        try {
+            sleep(2000);
+        } catch (InterruptedException e) {
+            System.out.println("cenas ya------   " + numeroLigados);
+        }
+
     }
 
     public void makeThings(HashMap<String, String> info) {
@@ -122,8 +132,7 @@ public class Connection extends Thread {
             switch (info.get("type")) {
                 case "create_auction": {
                     made_request = false;
-                    Timestamp dataLimite =  java.sql.Timestamp.valueOf (info.get("deadline").concat(":0"));
-                    System.out.println("o que o mano criou foi "+ dataLimite);
+                    Timestamp dataLimite =  java.sql.Timestamp.valueOf (info.get("deadline").concat(":00"));
                     auction = new Auctions(Long.parseLong(info.get("code")), info.get("title"), info.get("description"), Float.parseFloat(info.get("amount")), userLog.getName(), dataLimite);
                     while(made_request==false)
                     {
@@ -174,10 +183,48 @@ public class Connection extends Thread {
                 }
                 case "detail_auction": {
                     auction = findAuctionByID(info);
+                    ArrayList<Bid> bids = new ArrayList<Bid>();
+                    ArrayList<Message> messages = new ArrayList<Message>();
                     if (auction == null) {
                         outToClient.println("type: detail_auction, items_count: 0");
-                    } else { //FALTA AQUI ADD INFO DE BID E DATAS
-                        outToClient.println("type: detail_auction, title: " + auction.getTitle() + " description: " + auction.getDescription());
+                    } else {
+                        String auxDeadline = auction.getDataLimite().toString();
+
+                        try{
+                            bids = rmiConnection.allUserBids(userLog);
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+
+                        }
+                        try{
+                            messages = rmiConnection.allMessagesBid(auction);
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                        String auxClient = "type: detail_auction, title: " + auction.getTitle() + ", description: " + auction.getDescription()+", deadline: " + auxDeadline.substring(0, auxDeadline.length()-7);
+
+                        if(messages == null && bids == null){
+                            auxClient = auxClient.concat(", messages_count: 0");
+                            auxClient = auxClient.concat(", code: ").concat(Long.toString(auction.getCode()));
+                            auxClient = auxClient.concat(", bids_count: 0");
+                            outToClient.println(auxClient);
+                            break;
+                        }
+                        else if(messages == null ){
+                            auxClient = auxClient.concat(", messages_count: 0");
+                            auxClient = auxClient.concat(", code: ").concat(Long.toString(auction.getCode()));
+                            outToClient.println(auxClient.concat(printBids(bids)));
+                            break;
+                        }
+                        auxClient = auxClient.concat(", messages_count: ").concat(Integer.toString(messages.size()));
+                        auxClient = auxClient.concat(", code: ").concat(Long.toString(auction.getCode()));
+                        auxClient = auxClient.concat(printMessage(messages));
+                        if(bids == null){
+                            outToClient.println(auxClient.concat(", bids_count: 0"));
+                            break;
+                        }
+
+                        outToClient.println(auxClient.concat(printBids(bids)));
                     }
                     break;
                 }
@@ -196,23 +243,17 @@ public class Connection extends Thread {
                     if (auctions == null) {
                         outToClient.println("type: search_auction, items_count: 0");
                     } else {
-                        int items_count = auctions.size();
-                        String out = "type: search_auction, items_count: " + items_count;
-                        for (int i = 0; i < items_count; i++) {//falta dar get do id
-                            out = out.concat(", items_");
-                            out = out.concat(Integer.toString(i));
-                            out = out.concat("_id: ");
-                            out = out.concat(Integer.toString(auctions.get(i).getAuctionID()));
-                            out = out.concat(", items_");
-                            out = out.concat(Integer.toString(i));
-                            out = out.concat("_code: ");
-                            out = out.concat(Long.toString(auctions.get(i).getCode()));
-                            out = out.concat(", items_");
-                            out = out.concat(Integer.toString(i));
-                            out = out.concat("_title: ");
-                            out = out.concat(auctions.get(i).getTitle());
+                        ArrayList<Bid> bids = new ArrayList<Bid>();
+                        try{
+                            bids = rmiConnection.allUserBids(userLog);
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
                         }
-                        outToClient.println(out);
+                        if (bids == null){
+                            outToClient.println(printAuctions(auctions));
+                            break;
+                        }
+                        outToClient.println(printAuctions(auctions).concat(printBids(bids)));
                     }
                     break;
                 }
@@ -222,7 +263,7 @@ public class Connection extends Thread {
                     while (made_request == false)
                     {
                         try {
-                            bid = rmiConnection.makeBid(userLog.getName(), Integer.parseInt(info.get("id")), Integer.parseInt(info.get("amount")));
+                            bid = rmiConnection.makeBid(userLog.getName(), Integer.parseInt(info.get("id")), Float.parseFloat(info.get("amount")));
                             made_request = true;
                         } catch (RemoteException e) {
                             rmiConnection = rmi_conn.getRmiConnection();
@@ -262,27 +303,41 @@ public class Connection extends Thread {
                     break;
                 }
                 case "message": {
+                    Message message = null;
+                    made_request = false;
+                    while(made_request==false) {
+                        try {
+                            message = rmiConnection.createMessage(info.get("text"), Integer.parseInt(info.get("id")), userLog.getName());
+                            made_request = true;
+                        } catch (RemoteException e) {
+                            rmiConnection = rmi_conn.getRmiConnection();
+                        }
+                        if (message == null) {
+                            outToClient.println("type: message, ok: false");
+                        } else {
+                            outToClient.println("type: message, ok: true");
+                        }
+                    }
                     break;
                 }
                 case "online_users": {
                     made_request = false;
-                    ArrayList<Users> users = new ArrayList<Users>();
-                    String aux = "type: online_users, items_count: ";
-                    while(made_request == false)
-                    {
+                    ArrayList<Users> users = null;
+                    String aux = null;
+                    while (made_request == false) {
                         try {
                             users = rmiConnection.onlineUsers();
-                            made_request=true;
+                            made_request = true;
                         } catch (RemoteException e) {
                             rmiConnection = rmi_conn.getRmiConnection();
                         }
                     }
                     if (users == null) {
-                        outToClient.println("type: online_users, items_count: 0");
+                        outToClient.println("type: online_users, users_count: 0");
+                        break;
                     } else {
-                        aux.concat(Integer.toString(users.size()));
-                        aux.concat(",");
-                        for (int i = 0; i <users.size(); i++){
+                        aux = "type: online_users, users_count: " + Integer.toString(users.size());
+                        for (int i = 0; i < users.size(); i++) {
                             aux = printUser(aux, users.get(i), i);
                         }
                     }
@@ -370,11 +425,40 @@ public class Connection extends Thread {
             }
         }
     }
+
+    private String printBids(ArrayList<Bid> bids){
+        String out = ", bids_count: " + bids.size();
+        for(int i = 0; i < bids.size(); i++){
+            out = out.concat(", bid_").concat(Integer.toString(i)).concat("_username: ").concat(bids.get(i).getUsername());
+            out = out.concat(", bid_").concat(Integer.toString(i)).concat("_amount: ").concat(Float.toString(bids.get(i).getValor()));
+        }
+        return out;
+    }
+
+    private String printMessage(ArrayList<Message> messagens){
+        String out = null;
+        for(int i = 0; i < messagens.size(); i++){
+            out = ", messages_";
+            out = out.concat(Integer.toString(i)).concat("_username: ").concat(messagens.get(i).getUsername());
+            out = out.concat(", messages_").concat(Integer.toString(i)).concat("_text: ").concat(messagens.get(i).getMessagem());
+        }
+        return out;
+    }
+
     private String printUser(String out, Users user, int i){
-        out = out.concat(" users_");
+        out = out.concat(", users_");
         out = out.concat(Integer.toString(i));
         out = out.concat("_username: ");
         out = out.concat(user.getName());
+        return out;
+    }
+    private String printAuctions(ArrayList<Auctions> auctions){
+        String out = "type: search_auction, items_count: " + auctions.size();
+        for (int i = 0; i < auctions.size(); i++) {//falta dar get do id
+            out = out.concat(", items_").concat(Integer.toString(i)).concat("_id: ").concat(Integer.toString(auctions.get(i).getAuctionID()));
+            out = out.concat(", items_").concat(Integer.toString(i)).concat("_code: ").concat(Long.toString(auctions.get(i).getCode()));
+            out = out.concat(", items_").concat(Integer.toString(i)).concat("_title: ").concat(auctions.get(i).getTitle());
+        }
         return out;
     }
 
@@ -386,13 +470,11 @@ public class Connection extends Thread {
             try {
                 Auctions aux = rmiConnection.detail(Long.parseLong(info.get("id")));
                 made_request = true;
-                if(aux !=null){
-                    System.out.println("Encontrou correctamente a accao");
-                }
                 return aux;
             } catch (RemoteException e) {
                 rmiConnection = rmi_conn.getRmiConnection();
             }
+
         }
         return null;
     }

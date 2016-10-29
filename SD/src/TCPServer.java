@@ -12,66 +12,64 @@ public class TCPServer {
 
 
     public static void main(String args[]) {
-        String [] addresses = getConfigurations();
+        String[] addresses = getConfigurations();
         UDPSocket udpSocket;
         Scanner sc = new Scanner(System.in);
-
-        try {
-            int server_num = 0;
-            int rmiPort = 1099; // porto de ligação RMI
-            String rmiName = "ibei";
-            String rmiIp;
-            int numeroLigacoes = 0;
-            int serverPort = 0;
-            String path;
-            ServerSocket listenSocket = null;
-            ArrayList<PrintWriter> clients = new ArrayList<PrintWriter>();
-            // Mensagem de Inicio, Input de IP do RMI
-            while(server_num<3)
-            {
-                String []split = addresses[server_num].split("-");
-                serverPort = Integer.parseInt(split[1]);
-                try
-                {
-                    listenSocket = new ServerSocket(serverPort); //Cria um ServerSocket
-                    System.out.println("Estou à escuta no Porto " + serverPort);
-                    System.out.println("LISTEN SOCKET=" + listenSocket);
-                    if(server_num==0)
-                    {
-                        udpSocket = new UDPSocket(addresses[0],addresses[1],addresses[2],clients);
-                    }
-                    else if(server_num==1)
-                    {
-                        udpSocket = new UDPSocket(addresses[1],addresses[0],addresses[2],clients);
-                    }
-                    else
-                    {
-                        udpSocket = new UDPSocket(addresses[2],addresses[0],addresses[1],clients);
-                    }
-                    break;
+        //try {
+        int server_num = 0;
+        int rmiPort = 1099; // porto de ligação RMI
+        String rmiName = "ibei";
+        String rmiIp;
+        int numeroLigacoes = 0;
+        int serverPort = 0;
+        String path;
+        ServerSocket listenSocket = null;
+        ArrayList<PrintWriter> clients = new ArrayList<PrintWriter>();
+        // Mensagem de Inicio, Input de IP do RMI
+        while (server_num < 3) {
+            String[] split = addresses[server_num].split("-");
+            serverPort = Integer.parseInt(split[1]);
+            try {
+                listenSocket = new ServerSocket(serverPort); //Cria um ServerSocket
+                System.out.println("Estou à escuta no Porto " + serverPort);
+                System.out.println("LISTEN SOCKET=" + listenSocket);
+                if (server_num == 0) {
+                    udpSocket = new UDPSocket(addresses[0], addresses[1], addresses[2], clients);
+                } else if (server_num == 1) {
+                    udpSocket = new UDPSocket(addresses[1], addresses[0], addresses[2], clients);
+                } else {
+                    udpSocket = new UDPSocket(addresses[2], addresses[0], addresses[1], clients);
                 }
-                catch (IOException e)
-                {
+                break;
+            } catch (IOException e) {
 
-                }
-                ++server_num;
             }
-
-            System.out.print("IP do RMI:");
-            rmiIp = sc.nextLine();
-            RMIConnection rmi_conn = new RMIConnection(rmiIp,rmiPort,rmiName,clients);
-            while (true) {
-                Socket clientSocket = listenSocket.accept();
-                System.out.println("CLIENT_SOCKET (created at accept())=" + clientSocket);
-                numeroLigacoes++;
-                // Inicio de uma nova thread para tratar os clientes
-                new Connection(clientSocket, numeroLigacoes, rmi_conn, clients);
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            ++server_num;
         }
-    }
+
+        System.out.print("IP do RMI:");
+        rmiIp = sc.nextLine();
+        RMIConnection rmi_conn = new RMIConnection(rmiIp, rmiPort, rmiName, clients);
+
+        while (true) {
+            Socket clientSocket = null;
+
+            try {
+                clientSocket = listenSocket.accept();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println("CLIENT_SOCKET (created at accept())=" + clientSocket);
+            numeroLigacoes++;
+            // Inicio de uma nova thread para tratar os clientes
+            new Connection(clientSocket, numeroLigacoes, rmi_conn, clients);
+            System.out.println(numeroLigacoes);
+        }
+
+}
+
+
 
     public static String[] getConfigurations()
     {
@@ -173,7 +171,8 @@ public class TCPServer {
                     try
                     {
                         dataSocket.send(request_1);
-                        System.out.println("Send packet 1");
+                        System.out.println("Server 1 sends: " + clients.size());
+
                     }
                     catch (IOException e)
                     {
@@ -183,7 +182,7 @@ public class TCPServer {
                     try
                     {
                         dataSocket.send(request_2);
-                        System.out.println("Send packet 2");
+                        System.out.println("Server 2 sends: " + clients.size());
                     }
                     catch (IOException e)
                     {
@@ -195,7 +194,8 @@ public class TCPServer {
                     try
                     {
                         dataSocket.receive(reply_1);
-                        System.out.println("Receive packet 1");
+                        System.out.println("Received from Server 1: " + clients.size());
+                        System.out.println(clients.size());
                     }
                     catch (IOException e)
                     {
@@ -205,7 +205,8 @@ public class TCPServer {
                     try
                     {
                         dataSocket.receive(reply_2);
-                        System.out.println("Receive packet 2");
+                        System.out.println("Received from Server 2: " + clients.size());
+                        System.out.println(clients.size());
                     }
                     catch (IOException e)
                     {
@@ -217,6 +218,7 @@ public class TCPServer {
                     }
                     catch (InterruptedException e)
                     {
+
                         e.printStackTrace();
                     }
                 }
@@ -230,6 +232,7 @@ public class TCPServer {
                 if(dataSocket!=null)
                 {
                     dataSocket.close();
+
                 }
             }
         }

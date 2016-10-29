@@ -9,9 +9,8 @@ import java.rmi.server.UnicastRemoteObject;
 
 import java.sql.*;
 import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.sql.Date;
+import java.util.*;
 
 public class RMIServer implements RMI {
 
@@ -309,7 +308,7 @@ public class RMIServer implements RMI {
             else if(info.get("amount")!=null) {
                 query = "UPDATE leilao SET precomaximoleilao = ? WHERE idleilao = ? ";
                 preparedStatement = conn.prepareStatement(query);
-                preparedStatement.setInt(1, Integer.parseInt(info.get("amount")));
+                preparedStatement.setFloat(1, Float.parseFloat(info.get("amount")));
             }
             else if(info.get("description")!=null) {
                 query = "UPDATE leilao SET descricaoleilao = ? WHERE idleilao = ? ";
@@ -388,11 +387,10 @@ public class RMIServer implements RMI {
         return null;
     }
 
-    public Bid makeBid(String username, long idLeilao, int amount){
+    public Bid makeBid(String username, long idLeilao, float amount){
 
         System.out.println("\nCriação de licitacao");
         if(detail(idLeilao).getAtivo()== 1){ // protecao de valor de bid ja ultrapassado e leilao activo
-
             Bid bid = bestBid(idLeilao);
             System.out.println("leilao ativo");
             if(bid==null){
@@ -406,11 +404,11 @@ public class RMIServer implements RMI {
         }
         return null;
     }
-    private Bid createBid(String username, long idLeilao, int amount){
+    private Bid createBid(String username, long idLeilao, float amount){
         try {
             query = "INSERT INTO licitacao (valorlicitacao,user_nameuser,leilao_idleilao) VALUES (?,?,?)";
             preparedStatement = conn.prepareStatement(query);
-            preparedStatement.setInt(1, amount);
+            preparedStatement.setFloat(1, amount);
             preparedStatement.setString(2, username);
             preparedStatement.setLong(3, idLeilao);
             preparedStatement.executeUpdate();
@@ -435,6 +433,44 @@ public class RMIServer implements RMI {
         }
         return null;
     }
+    public ArrayList<Bid> allUserBids(Users user){
+        ArrayList<Bid> bids = new ArrayList<Bid>();
+        try {
+            query = "SELECT * FROM licitacao WHERE user_nameuser = ?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, user.getName());
+            ResultSet rs = preparedStatement.executeQuery();
+
+            while(rs.next()) {
+                bids.add(new Bid(rs.getInt("idlicitacao"), rs.getInt("valorlicitacao"), rs.getString("user_nameuser"), rs.getInt("leilao_idleilao")));
+            }
+            if(bids.size()!=0){
+                return bids;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    public ArrayList<Message> allMessagesBid(Auctions auction){
+        ArrayList<Message> messages = new ArrayList<Message>();
+        try {
+            query = "SELECT * FROM mensagem WHERE leilao_idleilao= ?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setInt(1, auction.getAuctionID());
+            ResultSet rs = preparedStatement.executeQuery();
+
+            while(rs.next()) {
+                messages.add(new Message(rs.getInt("idmensagem"), rs.getString("conteudomensagem"), rs.getString("user_nameuser"), rs.getInt("leilao_idleilao")));
+            }
+            if(messages.size()!=0){
+                return messages;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     public Bid bestBid(long id){
         System.out.println("\nMelhor licitacao");
@@ -451,6 +487,155 @@ public class RMIServer implements RMI {
                 }
             }
             return bid;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    public Message createMessage(String mensagem, long idleilao, String username){
+        try {
+            query = "INSERT INTO mensagem (conteudomensagem, user_nameuser,leilao_idleilao) VALUES (?,?,?)";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, mensagem);
+            preparedStatement.setString(2, username);
+            preparedStatement.setLong(3, idleilao);
+            preparedStatement.executeUpdate();
+            Message message = new Message(mensagem, username, idleilao);
+            return message;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    public String topAuctionsCreated(){
+        HashMap<String, String> info = new HashMap<>();
+        try{
+            query = "SELECT * FROM user";
+            preparedStatement = conn.prepareStatement(query);
+            ResultSet rs = preparedStatement.executeQuery();
+
+            int[] aux = new int[rs.getFetchSize()];
+            int i= 0;
+            while(rs.next()) {
+                try {
+                    query = "SELECT * FROM leilao WHERE user_nameuser = ?";
+                    preparedStatement = conn.prepareStatement(query);
+                    preparedStatement.setString(1, rs.getString("nameuser"));
+                    ResultSet rs2 = preparedStatement.executeQuery();
+                    int counter = 0;
+                    while(rs2.next()) {
+                        counter++;
+                    }
+                    info.put(Integer.toString(counter), rs.getString("nameuser"));
+                    aux[i++] = counter;
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            return printTop(info, topTen(aux));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private int[] topTen(int[] info){
+        int[] best = new int[10];
+        int aux;
+        for (int i = 0; i < 10; i++){
+            aux = 0;
+            for(int j = 0; j < info.length; j++){
+                if(info[aux] < info[j]){aux = j;}
+            }
+            best[i] = info[aux];
+            info[aux] = 0;
+        }
+        return best;
+    }
+
+    private String printTop(HashMap<String, String> info, int[] keys){
+        String result = null;
+        for(int i = 0; i < keys.length; i++){
+            result = result.concat(info.get(Integer.toString(keys[i])));
+        }
+        return result;
+    }
+
+
+
+    public String topSold(){
+            HashMap<String, String> info = new HashMap<>();
+            try{
+                query = "SELECT * FROM user";
+                preparedStatement = conn.prepareStatement(query);
+                ResultSet rs = preparedStatement.executeQuery();
+
+                int[] aux = new int[rs.getFetchSize()];
+                int i= 0;
+                java.util.Date date = new java.util.Date();
+                java.sql.Timestamp datacriacao = new java.sql.Timestamp(date.getTime());
+
+                while(rs.next()) {
+                    try {
+                        query = "SELECT * FROM leilao WHERE user_nameuser = ?";
+                        preparedStatement = conn.prepareStatement(query);
+                        preparedStatement.setString(1, rs.getString("nameuser"));
+                        ResultSet rs2 = preparedStatement.executeQuery();
+                        int counter = 0;
+                        while(rs2.next()) {
+                            if(rs2.getInt("ativoleilao") == 0 && datacriacao.after(rs.getTimestamp("dataterminoleilao"))) {
+                                counter++;
+                            }
+                        }
+                        info.put(Integer.toString(counter), rs.getString("nameuser"));
+                        aux[i++] = counter;
+
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return printTop(info, topTen(aux));
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+    public String topLast(){
+
+        HashMap<String, String> info = new HashMap<>();
+        try{
+            query = "SELECT * FROM user";
+            preparedStatement = conn.prepareStatement(query);
+            ResultSet rs = preparedStatement.executeQuery();
+
+            int[] aux = new int[rs.getFetchSize()];
+            int i= 0;
+            int days = 10*24*60*60*1000;
+            java.util.Date date = new java.util.Date();
+            java.sql.Timestamp datacriacao = new java.sql.Timestamp(date.getTime());
+            datacriacao.setTime(date.getTime() - days);
+            while(rs.next()) {
+                try {
+                    query = "SELECT * FROM leilao WHERE user_nameuser = ?";
+                    preparedStatement = conn.prepareStatement(query);
+                    preparedStatement.setString(1, rs.getString("nameuser"));
+                    ResultSet rs2 = preparedStatement.executeQuery();
+                    int counter = 0;
+                    while(rs2.next()) {
+                        if(datacriacao.before(rs.getTimestamp("dataterminoleilao"))) {
+                            counter++;
+                        }
+                    }
+                    info.put(Integer.toString(counter), rs.getString("nameuser"));
+                    aux[i++] = counter;
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            return printTop(info, topTen(aux));
         } catch (SQLException e) {
             e.printStackTrace();
         }

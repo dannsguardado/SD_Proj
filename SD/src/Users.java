@@ -9,6 +9,7 @@ public class Users implements Serializable {
     private String password;
     private int isAdmin;
     private int isBan;
+    //ver mrd de id
 
     public Users (int usernameID){
         this.usernameID = usernameID;
