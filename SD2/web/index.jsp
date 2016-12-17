@@ -31,7 +31,10 @@
                 <form action="registerpage">
                     <button type="submit">Register</button>
                 </form>
+
             </div>
+
+            <%--<form id="facebook_form" method="post"></form>--%>
             <form method="post" action="login">
                 <input id="loginType" type="text" value="facebook" name="LoginType" hidden="">
                 <button type="submit" method="execute" class="btn btn-block btn-primary btn-facebook">
@@ -72,6 +75,11 @@
 
 </div>
 
+
+<script src="js/social.js"></script>
+<script type="text/javascript">
+    window.onload = change_button_on_load(${user.getUser().getIdFacebook()});
+</script>
 </body>
 
 </html>

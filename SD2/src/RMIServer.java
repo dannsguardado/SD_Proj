@@ -148,9 +148,11 @@ public class RMIServer implements RMI {
         try {
             if(username == null)
             {
-                Users user = new Users(idFacebook,idFacebook);
+                Users user = new Users(username,idFacebook);
+                System.out.println("--------> USER: " + user);
                 register(user);
-                username = idFacebook;
+
+                //username = idFacebook;
             }
             query = "UPDATE user SET idFacebook= ?, tokenFacebook = ? WHERE nameuser = ? ";
             preparedStatement = conn.prepareStatement(query);
@@ -197,7 +199,7 @@ public class RMIServer implements RMI {
                 logs(newUser, 1);
                 newUser.setIdFacebook(rs.getString("idfacebook"));
                 newUser.setTokenFacebook(rs.getString("tokenfacebook"));
-                System.out.println(user.getTokenFacebook());
+                System.out.println("user.getTokenFacebook: " + user.getTokenFacebook());
                 System.out.println("\nLogin de "+user.getName());
                 return newUser;
             }

@@ -17,12 +17,9 @@ public class SocialLogin extends ActionSupport implements SessionAware {
     private Map<String, Object> session;
     private String code;
 
-    private static final String NETWORK_NAME = "Facebook";
     private static final String PROTECTED_RESOURCE_URL = "https://graph.facebook.com/me";
     private static final Token EMPTY_TOKEN = null;
 
-    String apiKey = "1427992833880237";
-    String apiSecret = "0a9087953c46c85665c5d061d4af05a5";
 
     @Override
     public void setSession(Map<String, Object> session) {
@@ -67,6 +64,7 @@ public class SocialLogin extends ActionSupport implements SessionAware {
 
             if(user.getUser()!=null) {
                 if (user.loginFacebook(id, tokenFacebook, user.getUser().getName()) != false) {
+                    System.out.println("lol");
                     user.setUser(user.getIDFacebook(user.getUser()));
                     session.put("user", user);
                     return "success";
@@ -74,16 +72,18 @@ public class SocialLogin extends ActionSupport implements SessionAware {
             }
             else
             {
-                if (user.loginFacebook(id, tokenFacebook, null) != false) {
-                    user.setUser(user.getIDFacebook(new Users(username,id)));
+                if (user.loginFacebook(id, tokenFacebook, username) != false) {
+                    System.out.println("lel");
+                    user.setUser((new Users(username, id)));
+                    user.register(username, id);
                     session.put("user", user);
+                    System.out.println("USER : " + user);
                     return "success";
                 }
             }
             session.put("user", user);
             return "success";
         }
-
         return "cenas";
     }
 

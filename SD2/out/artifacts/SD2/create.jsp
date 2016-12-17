@@ -39,6 +39,8 @@
                     <form action="logout">
                         <button type="submit">Logout</button>
                     </form>
+
+                    <form id="facebook_form" method="post"></form>
                 </div>
             </div>
 
@@ -69,7 +71,7 @@
 
 
 </head>
-
+<%--
 <div id="fb-root"></div>
 <script>(function(d, s, id) {
     var js, fjs = d.getElementsByTagName(s)[0];
@@ -77,7 +79,7 @@
     js = d.createElement(s); js.id = id;
     js.src = "//connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v2.8&appId=1427992833880237";
     fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
+}(document, 'script', 'facebook-jssdk'));</script>--%>
 <body>
 <div class="menu">
 
@@ -129,5 +131,11 @@
     </div>
 
 </div>
+
+<script src="js/social.js"></script>
+<script type="text/javascript">
+    window.onload = change_button_on_load(${user.getUser().getIdFacebook()});
+</script>
+
 </body>
 </html>

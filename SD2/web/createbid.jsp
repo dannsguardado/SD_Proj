@@ -32,6 +32,9 @@
                     <form action="logout">
                         <button type="submit">Logout</button>
                     </form>
+
+                    <form id="facebook_form" method="post"> </form>
+
                 </div>
             </div>
 
@@ -108,6 +111,10 @@
     </div>
 </div>
 
+<script src="js/social.js"></script>
+<script type="text/javascript">
+    window.onload = change_button_on_load(${user.getUser().getIdFacebook()});
+</script>
 
 </body>
 

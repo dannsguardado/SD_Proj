@@ -70,7 +70,7 @@ public class Login extends ActionSupport implements SessionAware {
 
                 return "authorization";
             }
-            else if(loginType != null && loginType.matches("login"))
+            /*else if(loginType != null && loginType.matches("login"))
             {
                 if(user.login(username, password)==false)
                 {
@@ -83,7 +83,7 @@ public class Login extends ActionSupport implements SessionAware {
                     }
                 }
                 return "success";
-            }
+            }*/
         }
         else {
             return "stay";

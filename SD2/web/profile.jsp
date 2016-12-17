@@ -32,9 +32,8 @@
                         <button type="submit">Logout</button>
                     </form>
 
-                    <form id="facebook_form" method="post">
+                    <form id="facebook_form" method="post"> </form>
 
-                    </form>
                 </div>
             </div>
 
@@ -104,12 +103,6 @@
     </div>
 
 </div>
-<!--
-<script>
-    window.addEventListener("onbeforeunload", function() {
-            document.logoutform.submit();
-    });
-</script> -->
 
 <script src="js/social.js"></script>
 <script type="text/javascript">
