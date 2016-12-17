@@ -69,5 +69,7 @@ public class Auctions implements Serializable {
     public String getAuction_username(){return auction_username;}
 
 
-
+    public void setAuctionID(int auctionID) {
+        this.auctionID = auctionID;
+    }
 }

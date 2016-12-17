@@ -1,3 +1,5 @@
+import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
+
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -26,16 +28,6 @@ public class RMIServer implements RMI {
         BDconnect();
 
     }
-
-    /*
-   * Esta função serve apenas para uma primeira impressão de teste para que se possa verificar
-   * que o Servidor Primário se conectou ao RMI
-   * **/
-//    public String printTest() throws RemoteException
-//    {
-//        System.out.println("Connected to TCP Server");
-//        return "Connected to RMI";
-//    }
 
     public String printNone() throws RemoteException {
         return ">>>Testing connection<<<";
@@ -82,15 +74,12 @@ public class RMIServer implements RMI {
                     }
                 }.start();
 
-                System.out.println("ola");
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
             new RMISecondaryConnection(port, name).start();
         }
-        System.out.println("ola2");
 
     }
 
@@ -116,6 +105,9 @@ public class RMIServer implements RMI {
             System.getProperties().put("java.security.policy", "politicas.policy");
             String sec_name = "rmi://" + rmiIp + ":" + port + "/" + path;
             System.setProperty("java.rmi.server.hostname", rmiIp);
+
+
+
             while(tries<3) {
                 try {
                     RMI rmiConnection = (RMI) Naming.lookup(sec_name);
@@ -168,7 +160,17 @@ public class RMIServer implements RMI {
 
     }
 
-
+    public void lastAcessRegister(Users user){
+        try{
+            System.out.println("actualizou");
+            query = "UPDATE user SET lastacessuser = now() WHERE nameuser = ?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, user.getName());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     public Users login(Users user) {
@@ -192,6 +194,8 @@ public class RMIServer implements RMI {
         return null;
     }
 
+
+
     public void logs(Users user, int on){
         try{
             query = "UPDATE user SET isliveuser= ? WHERE nameuser = ? ";
@@ -199,6 +203,10 @@ public class RMIServer implements RMI {
             preparedStatement.setInt(1, on);
             preparedStatement.setString(2, user.getName());
             preparedStatement.executeUpdate();
+            if (on == 0){
+                lastAcessRegister(user);
+            }
+
 
         } catch (SQLException e) {
         e.printStackTrace();
@@ -233,7 +241,7 @@ public class RMIServer implements RMI {
         return null;
     }
 
-    public Auctions create(Auctions auction, int id){
+    public Auctions create(Auctions auction, int id, boolean idcheck){
         System.out.println("\nCriação de leilao"); //ATENCAO AS DATAS
         try {
             query = "INSERT INTO leilao (idartigoleilao,datacriacaoleilao,dataterminoleilao,ativoleilao, tituloleilao, descricaoleilao, precomaximoleilao, user_nameuser) VALUES (?,?,?,?,?,?,?,?)";
@@ -247,11 +255,37 @@ public class RMIServer implements RMI {
             preparedStatement.setFloat(7, auction.getAmount());
             preparedStatement.setString(8, auction.getAuction_username());
             preparedStatement.executeUpdate();
+
+            if (idcheck){
+                auction = getId(auction);
+            }
             return auction;
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
+        return null;
+    }
+
+    private Auctions getId(Auctions auction){
+        try {
+            query = "SELECT * FROM leilao WHERE idartigoleilao = ? AND tituloleilao = ? ";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setLong(1, auction.getCode());
+            preparedStatement.setString(2, auction.getTitle());
+           /* preparedStatement.setString(3, auction.getDescription());
+            preparedStatement.setFloat(4, auction.getAmount());
+            preparedStatement.setString(5, auction.getAuction_username());*/
+            ResultSet rs = preparedStatement.executeQuery();
+            System.out.println("correu bem");
+            if(rs.next()){
+                auction.setAuctionID(rs.getInt("idleilao"));
+                return auction;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        System.out.println("deu mrd");
         return null;
     }
 
@@ -395,10 +429,12 @@ public class RMIServer implements RMI {
 
     public String banUser(String user){
         ArrayList <Auctions> auctionsUser = myauctions(user);
-        for(int i = 0; i < auctionsUser.size(); i++){
-            cancelAuction(auctionsUser.get(i));
+        if (auctionsUser != null){
+            for(int i = 0; i < auctionsUser.size(); i++){
+                cancelAuction(auctionsUser.get(i));
+            }
+
         }
-        //actualizar banUser BD
         try{
             query = "UPDATE user SET banuser = ? WHERE nameuser = ? ";
             preparedStatement = conn.prepareStatement(query);
@@ -421,7 +457,6 @@ public class RMIServer implements RMI {
             Bid bid = bestBid(idLeilao);
             System.out.println("leilao ativo");
             if(bid==null){
-                System.out.println("primeira licitacao");
                 return createBid(username, idLeilao, amount);
             }
             else if(bid.getValor()>amount){
@@ -431,6 +466,36 @@ public class RMIServer implements RMI {
         }
         return null;
     }
+
+    public String onlineNotification(String username){
+        String aux = null;
+        PreparedStatement preparedStatement1 = null;
+        try{
+            query = "SELECT DISTINCT leilao_idleilao FROM licitacao WHERE user_nameuser = ?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, username);
+            ResultSet rs = preparedStatement.executeQuery();
+            while(rs.next()){
+                System.out.println("verificar leilao de id " + rs.getInt("leilao_idleilao"));
+                String query1 = "(SELECT l.user_nameuser, l.valorlicitacao FROM licitacao l WHERE l.valorlicitacao = ? AND ((SELECT u.lastacessuser FROM user u WHERE u.nameuser = ? AND isliveuser = 1) < l.datalicitacao))";
+                preparedStatement1 = conn.prepareStatement(query1);
+                preparedStatement1.setFloat(1, bestBid(rs.getLong("leilao_idleilao")).getValor());
+                preparedStatement1.setString(2,username);
+                // System.out.println("A melhor lcitacao é " + bestBid(rs.getLong("leilao_idleilao")).getIdLeilao());
+                ResultSet rs1 = preparedStatement1.executeQuery();
+                if(rs1.next()){
+                    if (aux==null)aux="";
+                    aux = aux.concat("\n" + "O leilao de id ").concat(Long.toString(rs.getLong("leilao_idleilao")));
+                    aux = aux.concat(" recebeu uma melhor licitação de valor ").concat(Float.toString(rs1.getFloat("valorlicitacao")));
+                }
+            }
+            return aux;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private Bid createBid(String username, long idLeilao, float amount){
         if (checkActive(idLeilao)){
             try {
@@ -441,6 +506,7 @@ public class RMIServer implements RMI {
                 preparedStatement.setLong(3, idLeilao);
                 preparedStatement.executeUpdate();
                 Bid bid = new Bid(amount, username, idLeilao);
+                onlineNotification(username);
                 return bid;
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -479,6 +545,27 @@ public class RMIServer implements RMI {
         }
         return null;
     }
+
+    public ArrayList<Bid> allBidsAuction(Auctions auction){
+        ArrayList<Bid> bids = new ArrayList<Bid>();
+        try {
+            query = "SELECT * FROM licitacao WHERE leilao_idleilao = ?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setInt(1, auction.getAuctionID());
+            ResultSet rs = preparedStatement.executeQuery();
+
+            while(rs.next()) {
+                bids.add(new Bid(rs.getInt("idlicitacao"), rs.getInt("valorlicitacao"), rs.getString("user_nameuser"), rs.getInt("leilao_idleilao")));
+            }
+            if(bids.size()!=0){
+                return bids;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public ArrayList<Bid> allUserBids(Users user){
         ArrayList<Bid> bids = new ArrayList<Bid>();
         try {
@@ -553,140 +640,57 @@ public class RMIServer implements RMI {
         }
         return null;
     }
+
     public String topAuctionsCreated(){
-        HashMap<String, String> info = new HashMap<>();
         try{
-            query = "SELECT * FROM user";
+            query = "SELECT user_nameuser, count(idleilao) FROM leilao group by user_nameuser order by count(idleilao) DESC ";
             preparedStatement = conn.prepareStatement(query);
             ResultSet rs = preparedStatement.executeQuery();
 
-            int[] aux = new int[rs.getFetchSize()];
+            String aux = "\nTop 10 utilizadores com mais leilões criados: \n";
             int i= 0;
-            while(rs.next()) {
-                try {
-                    query = "SELECT * FROM leilao WHERE user_nameuser = ?";
-                    preparedStatement = conn.prepareStatement(query);
-                    preparedStatement.setString(1, rs.getString("nameuser"));
-                    ResultSet rs2 = preparedStatement.executeQuery();
-                    int counter = 0;
-                    while(rs2.next()) {
-                        counter++;
-                    }
-                    info.put(Integer.toString(counter), rs.getString("nameuser"));
-                    aux[i++] = counter;
-
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+            while(rs.next() && i < 10) {
+                aux = aux.concat(" Username: ").concat(rs.getString("user_nameuser")).concat(", auctions_count: ").concat(Integer.toString(rs.getInt("count(idleilao)")));
             }
-            return printTop(info, topTen(aux));
+            return aux;
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
     }
-
-    private int[] topTen(int[] info){
-        int[] best = new int[10];
-        int aux;
-        for (int i = 0; i < 10; i++){
-            aux = 0;
-            for(int j = 0; j < info.length; j++){
-                if(info[aux] < info[j]){aux = j;}
-            }
-            best[i] = info[aux];
-            info[aux] = 0;
-        }
-        return best;
-    }
-
-    private String printTop(HashMap<String, String> info, int[] keys){
-        String result = null;
-        for(int i = 0; i < keys.length; i++){
-            result = result.concat(info.get(Integer.toString(keys[i])));
-        }
-        return result;
-    }
-
-
-
     public String topSold(){
-            HashMap<String, String> info = new HashMap<>();
-            try{
-                query = "SELECT * FROM user";
-                preparedStatement = conn.prepareStatement(query);
-                ResultSet rs = preparedStatement.executeQuery();
-
-                int[] aux = new int[rs.getFetchSize()];
-                int i= 0;
-                java.util.Date date = new java.util.Date();
-                java.sql.Timestamp datacriacao = new java.sql.Timestamp(date.getTime());
-
-                while(rs.next()) {
-                    try {
-                        query = "SELECT * FROM leilao WHERE user_nameuser = ?";
-                        preparedStatement = conn.prepareStatement(query);
-                        preparedStatement.setString(1, rs.getString("nameuser"));
-                        ResultSet rs2 = preparedStatement.executeQuery();
-                        int counter = 0;
-                        while(rs2.next()) {
-                            if(rs2.getInt("ativoleilao") == 0 && datacriacao.after(rs.getTimestamp("dataterminoleilao"))) {
-                                counter++;
-                            }
-                        }
-                        info.put(Integer.toString(counter), rs.getString("nameuser"));
-                        aux[i++] = counter;
-
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
-                return printTop(info, topTen(aux));
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-    public String topLast(){
-
-        HashMap<String, String> info = new HashMap<>();
         try{
-            query = "SELECT * FROM user";
+            query = "select licitacao.user_nameuser, count(user_nameuser) from licitacao where licitacao.valorlicitacao in (SELECT min(valorlicitacao) FROM licitacao, leilao where leilao.ativoleilao=0 GROUP BY leilao_idleilao) GROUP BY user_nameuser ";
             preparedStatement = conn.prepareStatement(query);
             ResultSet rs = preparedStatement.executeQuery();
 
-            int[] aux = new int[rs.getFetchSize()];
+            String aux = "\nTop 10 utilizadores que mais leilões venceram:\n";
             int i= 0;
-            int days = 10*24*60*60*1000;
-            java.util.Date date = new java.util.Date();
-            java.sql.Timestamp datacriacao = new java.sql.Timestamp(date.getTime());
-            datacriacao.setTime(date.getTime() - days);
-            while(rs.next()) {
-                try {
-                    query = "SELECT * FROM leilao WHERE user_nameuser = ?";
-                    preparedStatement = conn.prepareStatement(query);
-                    preparedStatement.setString(1, rs.getString("nameuser"));
-                    ResultSet rs2 = preparedStatement.executeQuery();
-                    int counter = 0;
-                    while(rs2.next()) {
-                        if(datacriacao.before(rs.getTimestamp("dataterminoleilao"))) {
-                            counter++;
-                        }
-                    }
-                    info.put(Integer.toString(counter), rs.getString("nameuser"));
-                    aux[i++] = counter;
-
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+            while(rs.next() && i < 10) {
+                aux = aux.concat("\nusername: ").concat(rs.getString("user_nameuser")).concat(", auctions_count: ").concat(Integer.toString(rs.getInt("count(user_nameuser)")));
             }
-            return printTop(info, topTen(aux));
+            return aux;
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
     }
+    public String topLast(){
+        try{
+            query = "SELECT COUNT(idleilao) FROM leilao where leilao.datacriacaoleilao > ADDDATE(now(), -10)";
+            preparedStatement = conn.prepareStatement(query);
+            ResultSet rs = preparedStatement.executeQuery();
+            String aux = "\nNúmero total de leilões nos últimos 10 dias: ";
+            if(rs.next()) {
+                aux = aux.concat(Integer.toString(rs.getInt("COUNT(idleilao)")));
+            }
+            return aux;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
 
 

@@ -9,11 +9,10 @@ import java.util.HashMap;
 public interface RMI extends Remote{
 
     String testRMI() throws RemoteException;
-    //String printTest() throws RemoteException;
     String printNone() throws RemoteException;
     Users login(Users user) throws RemoteException;
     Users register(Users user) throws RemoteException;
-    Auctions create(Auctions auction, int id) throws RemoteException;
+    Auctions create(Auctions auction, int id, boolean idcheck) throws RemoteException;
     Auctions detail(Long code) throws RemoteException;
     ArrayList<Auctions> search(Long code) throws RemoteException;
     ArrayList<Auctions> myauctions(String name) throws RemoteException;
@@ -30,6 +29,8 @@ public interface RMI extends Remote{
     String topAuctionsCreated() throws RemoteException;
     String topSold() throws RemoteException;
     String topLast() throws RemoteException;
+    ArrayList<Bid> allBidsAuction(Auctions auction) throws RemoteException;
     void updateActiveAuctions() throws RemoteException;
-
+    void lastAcessRegister(Users user) throws  RemoteException;
+    String onlineNotification(String username) throws  RemoteException;
 }

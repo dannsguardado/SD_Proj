@@ -11,7 +11,7 @@ public class Bid implements Serializable{
     private int id;
     private float valor;
     private String username;
-    private  long idLeilao;
+    private long idLeilao;
 
     Bid(int id, float valor, String username, long idLeilao){
         this.id = id;

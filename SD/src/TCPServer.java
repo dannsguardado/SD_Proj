@@ -141,7 +141,7 @@ public class TCPServer {
             this.start();
         }
 
-       public void run()
+        public void run()
         {
             String []split = my_addresss.split("-"), split_1 = address_1.split("-"), split_2 = address_2.split("-");
             int my_port = Integer.parseInt(split[2]), port_1, port_2;
@@ -170,14 +170,11 @@ public class TCPServer {
                 DatagramPacket request_1,request_2,reply_1,reply_2;
                 while(true)
                 {
-                    buffer = Integer.toString(clients.size()).getBytes();
-                    System.out.println(Integer.toString(clients.size()));
+                    buffer = split[0].concat(":").concat(split[2]).concat(": ").concat(Integer.toString(clients.size())).getBytes();
                     request_1=new DatagramPacket(buffer,buffer.length,aHost_1,port_1);
                     try
                     {
                         dataSocket.send(request_1);
-                        System.out.println("Server 1 sends: " );
-
                     }
                     catch (IOException e)
                     {
@@ -187,18 +184,17 @@ public class TCPServer {
                     try
                     {
                         dataSocket.send(request_2);
-                        System.out.println("Server 2 sends: "  );
                     }
                     catch (IOException e)
                     {
                         System.err.println("Can't send ping...");
                     }
-                    buffer = new byte [
+                    buffer = new byte [100];
                     reply_1 = new DatagramPacket(buffer,buffer.length);
                     try
                     {
                         dataSocket.receive(reply_1);
-                        System.out.println("Recebeu: " +  new String(reply_1.getData()));
+                        System.out.println("Recebeu do Server " +  new String(reply_1.getData(), 0, reply_1.getLength()) + " users logados\n");
                     }
                     catch (IOException e)
                     {
@@ -208,7 +204,7 @@ public class TCPServer {
                     try
                     {
                         dataSocket.receive(reply_2);
-                        System.out.println("Recebeu: " + new String(reply_2.getData()));
+                        System.out.println("Recebeu so Server " + new String(reply_2.getData(), 0, reply_2.getLength()) + " users logados\n");
 
                     }
                     catch (IOException e)

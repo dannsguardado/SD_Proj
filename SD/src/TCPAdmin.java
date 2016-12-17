@@ -1,14 +1,17 @@
 
 import java.io.*;
-import java.net.Socket;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Random;
 import java.util.Scanner;
 
 public class TCPAdmin{
 
     static RMI rmiConnection;
+    static Users userLog = null;
 
     public static void main(String args[]) {
         Scanner sc = new Scanner(System.in);
@@ -28,25 +31,30 @@ public class TCPAdmin{
         login();
     }
 
+
+
     private static void login() {
 
         String name, password;
 
         Scanner sc = new Scanner(System.in);
         System.out.printf("\nLOGIN\n");
+        while (userLog == null){
 
-        System.out.println("Nome: ");
-        name = sc.nextLine();
+            System.out.println("Nome: ");
+            name = sc.nextLine();
 
-        System.out.println("Password: ");
-        password = sc.nextLine();
+            System.out.println("Password: ");
+            password = sc.nextLine();
 
-
-        Users user = new Users(name, password);
-        try {
-            rmiConnection.login(user);
-        } catch (RemoteException e) {
-            e.printStackTrace();
+            try {
+                userLog = rmiConnection.login(new Users(name, password));
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            if(userLog == null){
+                System.out.println("Login incorreto");
+            }
         }
         menu();
     }
@@ -150,34 +158,110 @@ public class TCPAdmin{
                     }
                     if(auctionsCreated == null){
                         System.out.println("Top 10 utilizadores com mais leilões criados: Erro");
+                    }else {
+                        System.out.println(auctionsCreated);
                     }
-                    else if(auctionsSold == null){
+                    if(auctionsSold == null){
                         System.out.println("Top 10 utilizadores que mais leilões venceram: Erro");
                     }
-                    else if(auctionsLast == null){
+                    else {
+                        System.out.println(auctionsSold);
+                    }
+                    if(auctionsLast == null){
                         System.out.println("Número total de leilões nos últimos 10 dias: Erro");
                     }
                     else {
-                        System.out.println("Top 10 utilizadores com mais leilões criados: ");
-                        System.out.println(auctionsCreated);
-                        System.out.println("Top 10 utilizadores que mais leilões venceram: ");
-                        System.out.println(auctionsSold);
-                        System.out.println("Número total de leilões nos últimos 10 dias");
                         System.out.println(auctionsLast);
                     }
+
                     break;
                 case"4"://testes servidor
-                   /* try{
+                    auction = null;//testar criar leilao
+                    Random rnd = new Random();
+                    java.util.Date date = new java.util.Date();
+                    java.sql.Timestamp dataLimite = new java.sql.Timestamp(date.getTime());;
+                    dataLimite.setTime(date.getTime() + rnd.nextInt());
+                    String title = generateString(20);
+                    String description = generateString(30);
+                    auction = new Auctions(rnd.nextInt(), title, description, rnd.nextFloat(), userLog.getName(), dataLimite);
 
-                       // auction = rmiConnection.create();
-                        try{
-                           // auction = rmiConnection.cancelAuction(auction);
-                        }catch (RemoteException e) {
-                            e.printStackTrace();
-                        }
+                    try {
+                        auction = rmiConnection.create(auction, userLog.getUsernameID(), true);
                     } catch (RemoteException e) {
                         e.printStackTrace();
-                    }*/
+                    }
+
+                    if (auction == null){
+                        System.out.println("type: create_auction, ok: false");
+                        break;
+                    }
+                    else {
+                        System.out.println("type: create_auction, ok: true");
+                    }
+                    //Testar fazer licitacao
+                    Bid bid = null;
+                    try {
+                        bid = rmiConnection.makeBid(userLog.getName(), auction.getAuctionID(), auction.getAmount()-1);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    if (bid == null){
+                        System.out.println("type: bid, ok: false");
+                    }
+                    else {
+                        System.out.println("type: bid, ok: true");
+                    }
+
+
+                    // testar consultar detalhes
+                    ArrayList<Bid> bids = new ArrayList<Bid>();
+                    ArrayList<Message> messages = new ArrayList<Message>();
+/*
+                    try {
+                        auction = rmiConnection.detail();
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+*/
+                    if (auction == null){
+                        System.out.println("type: detail_auction, ok: false");
+                    }
+                    try{
+                        bids = rmiConnection.allBidsAuction(auction);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+
+                    }
+                    try{
+                        messages = rmiConnection.allMessagesBid(auction);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    String auxDeadline = auction.getDataLimite().toString();
+                    String auxClient = "type: detail_auction, title: " + auction.getTitle() + ", description: " + auction.getDescription()+", deadline: " + auxDeadline.substring(0, auxDeadline.length()-7);
+
+                    if(messages == null && bids == null){
+                        auxClient = auxClient.concat(", messages_count: 0");
+                        auxClient = auxClient.concat(", code: ").concat(Long.toString(auction.getCode()));
+                        auxClient = auxClient.concat(", bids_count: 0");
+                        System.out.println(auxClient);
+                        break;
+                    }
+                    else if(messages == null ){
+                        auxClient = auxClient.concat(", messages_count: 0");
+                        auxClient = auxClient.concat(", code: ").concat(Long.toString(auction.getCode()));
+                        System.out.println(auxClient.concat(printBids(bids)));
+                        break;
+                    }
+                    auxClient = auxClient.concat(", messages_count: ").concat(Integer.toString(messages.size()));
+                    auxClient = auxClient.concat(", code: ").concat(Long.toString(auction.getCode()));
+                    auxClient = auxClient.concat(printMessage(messages));
+                    if(bids == null){
+                        System.out.println(auxClient.concat(", bids_count: 0"));
+                        break;
+                    }
+
+                    System.out.println(auxClient.concat(printBids(bids)));
 
                     break;
                 default:
@@ -185,5 +269,35 @@ public class TCPAdmin{
             }
         }
     }
+    public static String generateString(int length) {
+        String characters = "abcdefghijlmnopqrstuvxzwy";
+        Random rng = new Random();
+        char[] text = new char[length];
+        for (int i = 0; i < length; i++)
+        {
+            text[i] = characters.charAt(rng.nextInt(characters.length()));
+        }
+        return new String(text);
+    }
+
+    private static String printBids(ArrayList<Bid> bids){
+        String out = ", bids_count: " + bids.size();
+        for(int i = 0; i < bids.size(); i++){
+            out = out.concat(", bid_").concat(Integer.toString(i)).concat("_username: ").concat(bids.get(i).getUsername());
+            out = out.concat(", bid_").concat(Integer.toString(i)).concat("_amount: ").concat(Float.toString(bids.get(i).getValor()));
+        }
+        return out;
+    }
+
+    private static String printMessage(ArrayList<Message> messagens){
+        String out = null;
+        for(int i = 0; i < messagens.size(); i++){
+            out = ", messages_";
+            out = out.concat(Integer.toString(i)).concat("_username: ").concat(messagens.get(i).getUsername());
+            out = out.concat(", messages_").concat(Integer.toString(i)).concat("_text: ").concat(messagens.get(i).getMessagem());
+        }
+        return out;
+    }
+
 }
 

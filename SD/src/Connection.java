@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.rmi.RemoteException;
 import java.sql.Timestamp;
 import java.util.*;
@@ -47,6 +48,7 @@ public class Connection extends Thread {
                     for (String pair : keyValuePairs) {
                         String[] entry = pair.split(": ");
                         info.put(entry[0].trim(), entry[1].trim());
+
                     }
                     System.out.println(info);
 
@@ -54,15 +56,8 @@ public class Connection extends Thread {
                     makeThings(info);
                     info.clear();
                 }
-                /*try{
-                    outToClient.println("Clientes ligados: "+clients.size());
-                    sleep(60000);
-                    //outToClient.println("Clientes ligados: "+clients.size());
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }*/
-
             }
+
 
             rmiConnection.logs(userLog, 0);
             clients.remove(this.outToClient);
@@ -70,12 +65,13 @@ public class Connection extends Thread {
         } catch (RemoteException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+
+            try {
+                rmiConnection.logs(userLog,0);
+            } catch (RemoteException e1) {
+                e1.printStackTrace();
+            }
+
         }
 
     }
@@ -145,7 +141,7 @@ public class Connection extends Thread {
                     while(made_request==false)
                     {
                         try {
-                            auction = rmiConnection.create(auction, userLog.getUsernameID());
+                            auction = rmiConnection.create(auction, userLog.getUsernameID(), false);
                             made_request = true;
                         } catch (RemoteException e) {
                             rmiConnection = rmi_conn.getRmiConnection();
@@ -353,70 +349,14 @@ public class Connection extends Thread {
 
                     break;
                 }
-
-                // ESTE SÂO APENAS PARA OS ADMIN'S!!!!
-                case "cancel_auction": {
-                    made_request = false;
-                    if(userLog.getIsAdmin() == 1){
-                        auction = findAuctionByID(info);
-                        while(made_request==false)
-                        {
-                            try {
-                                auction = rmiConnection.cancelAuction(auction);
-                                made_request = true;
-                                if (auction == null) {
-                                    outToClient.println("type: edit_auction, ok: false");
-                                } else {
-                                    outToClient.println("type: cancel_auction, ok: true");
-                                }
-                            } catch (RemoteException e) {
-                                rmiConnection = rmi_conn.getRmiConnection();
-                            }
-
-                        }
-                    }
-                    else {
-                        outToClient.println("type: cancel_auctions, ok: No premission");
-                    }
-                    break;
-                }
-                case "ban_user": {
-                    made_request = false;
-                    System.out.println("bora banir maninhos");
-                    if(userLog.getIsAdmin() == 1){
-                        String userBan = info.get("username");
-                        while(made_request==false)
-                        {
-                            try {
-                                userBan = rmiConnection.banUser(userBan);
-                                made_request = true;
-                                if (userBan == null) {
-                                    outToClient.println("type: ban_user, ok: false");
-                                } else {
-                                    outToClient.println("type: ban_user, ok: true");
-                                }
-                            } catch (RemoteException e) {
-                                rmiConnection = rmi_conn.getRmiConnection();
-                            }
-                        }
-                    }
-                    else {
-                        outToClient.println("type: ban_user, ok: No premission");
-                    }
-                    break;
-                }
-                case "server_stats": {
-                    break;
-                }
-                case "server_test": {
-                    break;
-                }
                 case "exit":{
                     made_request = false;
                     while(made_request==false)
                     {
                         try{
                             rmiConnection.logs(userLog, 0);
+                            //rmiConnection.lastAcessRegister(userLog);
+                            clients.remove(this.outToClient);
                             made_request = true;
                             userLog = null;
                         }catch (RemoteException e) {
