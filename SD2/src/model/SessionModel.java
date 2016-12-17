@@ -1,21 +1,30 @@
 package model;
 
 import java.io.*;
+import java.net.Socket;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
+
  * Created by ritaalmeida on 24/11/16.
  */
 public class SessionModel implements Serializable {
     private static final long serialVersionUID = 1L;
     private RMI rmiConnection;
+    private DataInputStream in;
+    private DataOutputStream out;
+    private ObjectOutputStream objOut;
+    private ObjectInputStream objIn;
+    private Socket socket;
     private Users user;
     private int rmiPort = 1098; // porto de ligação RMI
     private String rmiName = "ibei";
     private String rmiIp = "localhost";
     private ArrayList<PrintWriter> clients = new ArrayList<PrintWriter>();
+    private ArrayList<WaitNotification> waitNotifications = new ArrayList<>();
+
 
     public SessionModel() {
         createSocket();
@@ -26,6 +35,15 @@ public class SessionModel implements Serializable {
         try
         {
             rmiConnection.testRMI();
+
+            socket = new Socket("localhost", 6005);
+            in = new DataInputStream(socket.getInputStream());
+            out = new DataOutputStream(socket.getOutputStream());
+            objOut = new ObjectOutputStream(out);
+            objIn = new ObjectInputStream(in);
+            waitNotifications = (ArrayList<WaitNotification>)objIn.readObject();
+
+
         }
         catch(Exception e)
         {
@@ -41,21 +59,49 @@ public class SessionModel implements Serializable {
 
     public boolean login(String username, String password) {
 
-            try {
-                user = new Users(username, password);
-                if ((user = rmiConnection.login(user)) == null) {
-                    System.out.println("Login: false");
-                    return false;
-                } else {
-                    System.out.println("Login: true");
-                    return true;
-                }
-            } catch (RemoteException ex) {
-                System.err.println("Error on Login, Remote Exeption: " + ex);
-                createSocket();
+        try {
+            user = new Users(username, password);
+            if ((user = rmiConnection.login(user)) == null) {
+                return false;
+            } else {
+                return true;
             }
+        } catch (RemoteException ex) {
+            System.err.println("Error on Login, Remote Exeption: " + ex);
+            createSocket();
+        }
 
         return false;
+    }
+
+    public boolean loginFacebook(String idFacebook, String tokenFacebook, String username){
+
+        try {
+            if(rmiConnection.loginFacebook(idFacebook, tokenFacebook, username) == true);
+            return true;
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public Users getIDFacebook(Users user){
+        try {
+            return rmiConnection.getIDFacebook(user);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Users removeFacebook(Users user){
+
+        try {
+            return rmiConnection.removeFacebook(user);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public Auctions createAuction(long code, String title, String description, float amount, java.sql.Timestamp dataLimite){
@@ -63,7 +109,7 @@ public class SessionModel implements Serializable {
         Auctions auction = new Auctions(code, title, description, amount, user.getName(), dataLimite);
         try
         {
-            return rmiConnection.create(auction,user.getUsernameID(),false);
+            return rmiConnection.create(auction,user.getUsernameID(),true);
         }
         catch (RemoteException e)
         {
@@ -94,6 +140,18 @@ public class SessionModel implements Serializable {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public boolean sendMessage(long id, String username){
+        try
+        {
+            if(rmiConnection.createNotification(username,id))return true;
+        }
+        catch (RemoteException e)
+        {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public String banUser(String username){
@@ -155,13 +213,15 @@ public class SessionModel implements Serializable {
     }
 
     public Auctions editAuction(long code, HashMap<String, String> info){
-
-
         Auctions auction= findAuctionByID(code);
-
         try
         {
-            return rmiConnection.editAuction(auction, info);
+            if (auction != null){
+                return rmiConnection.editAuction(auction, info);
+            }
+            else {
+                return null;
+            }
         }
         catch (RemoteException e)
         {
@@ -172,15 +232,42 @@ public class SessionModel implements Serializable {
     }
 
     public ArrayList<Auctions> searchAuction(long code){
-        System.out.println("Search Auction");
         try {
-            System.out.println("Login: true");
             return rmiConnection.search(code);
         }
         catch (RemoteException e) {
             e.printStackTrace();
         }
-        System.out.println("Login: false");
+        return null;
+    }
+
+    public ArrayList<Message> getMessages(Auctions code){
+        try {
+            return rmiConnection.allMessagesBid(code);
+        }
+        catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public ArrayList<Bid> getBids(Auctions code){
+        try {
+            return rmiConnection.allBidsAuction(code);
+        }
+        catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Bid getBestBid(long code){
+        try {
+            return rmiConnection.bestBid(code);
+        }
+        catch (RemoteException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -200,6 +287,43 @@ public class SessionModel implements Serializable {
             return rmiConnection.detail(code);
         }
         catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    public boolean logOut(int on){
+        try {
+            rmiConnection.logs(user,on);
+            return true;
+
+        } catch (RemoteException ex) {
+            System.err.println("Error on Login, Remote Exeption: " + ex);
+        }
+        return false;
+    }
+
+
+    public boolean register(String username, String  password){
+        user = new Users(username, password);
+        try {
+            if((user = rmiConnection.register(user)) == null ){
+                return false;
+            }
+            else{
+                rmiConnection.login(user);
+                return true;
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public ArrayList<Auctions> myAuctions(String name){
+        name = user.getName();
+        try {
+            return rmiConnection.myauctions(name);
+        } catch (RemoteException e) {
             e.printStackTrace();
         }
         return null;

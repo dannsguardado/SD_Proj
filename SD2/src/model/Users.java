@@ -1,6 +1,5 @@
 package model;
 import java.io.Serializable;
-import java.security.Timestamp;
 
 /**
  * Created by ritaalmeida on 18/10/16.
@@ -14,6 +13,8 @@ public class Users implements Serializable {
     private int auctionsCount;
     private int isLive;
     private java.sql.Timestamp lastAccess;
+    private String idFacebook;
+    private String tokenFacebook;
     //ver mrd de id
 
     public Users (int usernameID){
@@ -83,5 +84,21 @@ public class Users implements Serializable {
 
     public void setLastAccess(java.sql.Timestamp lastAccess) {
         this.lastAccess = lastAccess;
+    }
+
+    public String getIdFacebook() {
+        return idFacebook;
+    }
+
+    public String getTokenFacebook() {
+        return tokenFacebook;
+    }
+
+    public void setIdFacebook(String idFacebook) {
+        this.idFacebook = idFacebook;
+    }
+
+    public void setTokenFacebook(String tokenFacebook) {
+        this.tokenFacebook = tokenFacebook;
     }
 }

@@ -9,18 +9,6 @@ body{
 	padding:0;
 	margin:0;
 }
-
-.menu{
-	text-align: center;
-	padding-top: 25px;
-	margin-bottom:200px;
-}
-
-.menu img{
-	opacity: 0.4;
-	margin: 20px auto;
-}
-
 .menu h1{
 	margin-top:0;
 	font: normal 32px/1.5 'Open Sans', sans-serif;
@@ -28,34 +16,47 @@ body{
 	padding-bottom: 16px;
 }
 
-.menu h2{
-	color: #F05283;
+.menu nav{
+	float: left;
+	max-width: 190px;
+	margin: 25px;
+	padding: 1em;
+	border: 2px solid cornflowerblue;
+	border-radius: 15px;
+}
+.menu .info{
+	margin-top: 30px;
+	margin-right: 180px;
+	margin-left: 60px;
+	padding: 3em;
+	overflow: hidden;
 }
 
-.menu h2 a{
-	color:inherit;
+.menu .info, .menu.bids{
+	float: left;
+}
+
+.menu .bids{
+	margin-top: 60px;
+	margin-left: 190px;
+	padding: 3em;
+	overflow: hidden;
+}
+
+
+.menu{
+
+	padding-top: 50px;
+	margin-bottom:200px;
+}
+
+
+
+
+.menu button{
 	text-decoration: none;
-	display: inline-block;
-	border: 1px solid #F05283;
-	padding: 10px 15px;
-	border-radius: 3px;
-	font: bold 14px/1 'Open Sans', sans-serif;
-	text-transform: uppercase;
-}
-
-.menu h2 a:hover{
-	background-color:#F05283;
-	transition:0.2s;
-	color:#fff;
-}
-
-.menu ul {
-	max-width: 600px;
-	margin: 60px auto 0;
-}
-
-.menu ul a{
-	text-decoration: none;
+	display: block;
+	horiz-align: left;
 	color: #FFF;
 	text-align: left;
 	background-color: #B9C1CA;
@@ -63,34 +64,21 @@ body{
 	border-radius: 2px;
 	opacity: 0.8;
 	font-size: 16px;
-	display: inline-block;
 	margin: 4px;
 	line-height: 1;
 	outline: none;
-
+	width: 170px;
 	transition: 0.2s ease;
 }
 
-.menu ul li a.active{
+.menu button.active{
 	background-color: #66B650;
 	pointer-events: none;
 }
 
-.menu ul li a:hover {
+.menu button:hover {
 	opacity: 1;
 }
 
-.menu ul{
-	list-style: none;
-	padding: 0;
-}
-
-.menu ul li{
-	display: inline-block;
-}
-
-@media (max-height:800px){
-	.menu { padding-top:40px; }
-}
 
 

@@ -2,14 +2,10 @@ package action;
 
 import com.opensymphony.xwork2.ActionSupport;
 import model.Auctions;
-import model.Message;
 import model.SessionModel;
 import org.apache.struts2.interceptor.SessionAware;
 
-import java.util.ArrayList;
 import java.util.Map;
-
-import static com.sun.org.apache.xml.internal.serializer.utils.Utils.messages;
 
 /**
  * Created by ritaalmeida on 28/11/16.
@@ -28,15 +24,17 @@ public class CancelAuction extends ActionSupport implements SessionAware {
         SessionModel auction = getModel();
         session.remove("auction");
         if (auction.getRmiConnection() != null) {
-            if (id != 0) {
-                if ((auction.cancelAuction(id)) != null) {
-                    return "success";
-                } else {
-                    return "login";
+            if(session.get("user")!=null){
+                if (id != 0) {
+                    Auctions auctions= null;
+                    if ((auctions = auction.cancelAuction(id)) != null) {
+                        session.put("auction", auctions);
+                        return "success";
+                    }
                 }
-            }else
-            {
                 return "stay";
+            }else {
+                return "login";
             }
         } else {
             return "noservice";

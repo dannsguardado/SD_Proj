@@ -28,24 +28,20 @@ public class Auctions implements Serializable {
         this.ativo = 1;
         this.dataLimite = dataLimite;
         this.auction_username = auction_username;
-        //this.dateLimit = dateLimit;
         Date date = new Date();
         datacriacao = new java.sql.Timestamp(date.getTime());
-        System.out.println("create data limite: "+ dataLimite);
-
     }
 
-    public Auctions( long code, String title, String description, float amount, String auction_username, int auctionID, java.sql.Timestamp dataLimite){
+    public Auctions( long code, String title, String description, float amount, String auction_username, int auctionID,java.sql.Timestamp datacriacao, java.sql.Timestamp dataLimite){
         this.code = code;
         this.title = title;
         this.description = description;
         this.amount = amount;
-        Date date = new Date();
-        datacriacao = new java.sql.Timestamp(date.getTime());
+        this.datacriacao = datacriacao;
+        this.dataLimite = dataLimite;
         this.ativo = 1;
         this.auction_username = auction_username;
         this.auctionID = auctionID;
-        this.dataLimite = dataLimite;
     }
 
     public Auctions(long code){
@@ -73,14 +69,42 @@ public class Auctions implements Serializable {
     public java.sql.Timestamp getDatacriacao() {
         return datacriacao;
     }
+    public String getDatacriacaoString() {
+        String aux =  datacriacao.toString();
+        return aux.substring(0, aux.length()-5);
+    }
+    public String getDataLimiteString(){
+        String aux = dataLimite.toString();
+        return aux.substring(0, aux.length()-5);
+    }
     public java.sql.Timestamp getDataLimite() {
         return dataLimite;
     }
     public float getAtivo() { return ativo; }
-    public String getAuction_username(){return auction_username;}
+    public String getName(){return auction_username;}
 
 
     public void setAuctionID(int auctionID) {
         this.auctionID = auctionID;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setAmount(float amount) {
+        this.amount = amount;
+    }
+
+    public void setDeadline(java.sql.Timestamp deadline) {
+        this.dataLimite = deadline;
+    }
+
+    public void setAtivo(int ativo) {
+        this.ativo = ativo;
     }
 }

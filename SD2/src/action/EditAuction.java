@@ -1,11 +1,10 @@
 package action;
 
 import com.opensymphony.xwork2.ActionSupport;
+import model.Auctions;
 import model.SessionModel;
 import org.apache.struts2.interceptor.SessionAware;
 
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,10 +14,9 @@ import java.util.Map;
 public class EditAuction extends ActionSupport implements SessionAware {
     private static final long serialVersionUID = 1L;
     private Map<String, Object> session;
-    private long code;
     private String title, description;
     private float amount;
-    private Timestamp datalimite;
+    private String datalimite;
 
     @Override
     public void setSession(Map<String, Object> session) {
@@ -27,51 +25,45 @@ public class EditAuction extends ActionSupport implements SessionAware {
 
     public String execute() {
         SessionModel auction = getModel();
+        Auctions auctions = (Auctions)session.get("auction");
+        session.remove("auction");
         HashMap<String, String> info = new HashMap<>();
-
         if (auction.getRmiConnection() != null) {
-            if (code != 0){
+            if(session.get("user")!=null) {
                 if (title != null) {
                     info.put("title", title);
-                    if (auction.editAuction(code, info) != null) {
+                    if ((auctions = auction.editAuction(auctions.getAuctionID(), info)) != null) {
+                        session.put("auction", auctions);
                         return "success";
-                    } else {
-                        return "login";
                     }
                 }
                 if (amount != 0) {
                     info.put("amount", Float.toString(amount));
-                    if (auction.editAuction(code, info) != null) {
+                    if ((auctions = auction.editAuction(auctions.getAuctionID(), info)) != null) {
+                        session.put("auction", auctions);
                         return "success";
-                    } else {
-                        return "login";
                     }
                 }
                 if (datalimite != null) {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-                    info.put("deadline", dateFormat.format(datalimite));
-                    if (auction.editAuction(code, info) != null) {
+                    info.put("deadline", datalimite);
+                    if ((auctions = auction.editAuction(auctions.getAuctionID(), info)) != null) {
+                        session.put("auction", auctions);
                         return "success";
-                    } else {
-                        return "login";
                     }
+
                 }
                 if (description != null) {
                     info.put("description", description);
-                    if (auction.editAuction(code, info) != null) {
+                    if ((auctions = auction.editAuction(auctions.getAuctionID(), info)) != null) {
+                        session.put("auction", auctions);
                         return "success";
-                    } else {
-                        return "login";
                     }
                 }
-                return "noservice";
-            }else
-            {
-                return "stay";
+            }else {
+                return "login";
             }
-        } else {
-            return "noservice";
         }
+        return "noservice";
     }
 
 
@@ -80,10 +72,6 @@ public class EditAuction extends ActionSupport implements SessionAware {
             this.setSessionModel(new SessionModel());
         }
         return (SessionModel) session.get("model");
-    }
-
-    public void setCode(long code) {
-        this.code = code;
     }
 
     public void setTitle(String title) {
@@ -99,7 +87,7 @@ public class EditAuction extends ActionSupport implements SessionAware {
     }
 
 
-    public void setDatalimite(Timestamp datalimite) {
+    public void setDatalimite(String datalimite) {
         this.datalimite = datalimite;
     }
 

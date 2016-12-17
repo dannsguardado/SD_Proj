@@ -5,6 +5,8 @@
   Time: 19:27
   To change this template use File | Settings | File Templates.
 --%>
+<%@ taglib prefix="s" uri="/struts-tags" %>
+<%@	taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <head>
 
@@ -25,15 +27,21 @@
 
             <h1><a href="#">I<span>bei</span></a></h1>
 
-            <nav>
-                <a href="#">MyBids</a>
-                <a href="#" class="selected">MyAuctions</a>
-                <a href="#">cena</a>
-                <a href="#">cena</a>
-            </nav>
+            <div class="buttonLog">
+                <form action="registerpage">
+                    <button type="submit">Register</button>
+                </form>
+            </div>
+            <form method="post" action="login">
+                <input id="loginType" type="text" value="facebook" name="LoginType" hidden="">
+                <button type="submit" method="execute" class="btn btn-block btn-primary btn-facebook">
+                    <i class="fa fa-facebook"></i> Login with Facebook
+                </button>
+            </form>
 
-            <a href="#" class="logout-button">Logout</a>
         </div>
+
+
 
     </div>
 
@@ -58,9 +66,8 @@
             <input id="password" type="password" class="form-control" placeholder="Password" name="Password" required/><br>
             <input type="submit" class="btn btn-primary" method="execute" value="Log in">
         </form>
-        <div class="modal-footer">
-            <a href="#" data-dismiss="modal" class="btn">Register</a>
-        </div>
+
+
     </div>
 
 </div>

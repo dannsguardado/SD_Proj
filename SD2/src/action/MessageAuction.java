@@ -1,9 +1,12 @@
 package action;
 
 import com.opensymphony.xwork2.ActionSupport;
+import model.Auctions;
+import model.Message;
 import model.SessionModel;
 import org.apache.struts2.interceptor.SessionAware;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -24,19 +27,27 @@ public class MessageAuction extends ActionSupport implements SessionAware {
     public String execute() {
         SessionModel auction = getModel();
         if (auction.getRmiConnection() != null) {
-            if (code != 0 && message != null ) {
-                if (auction.messageAuction(code, message) != null) {
-                    return "success";
-                } else {
-                    return "login";
+            if(session.get("user")!=null) {
+                if (code != 0 && message != null ) {
+                    if (auction.messageAuction(code, message) != null) {//faz sms
+                        Auctions auctions;
+                        if((auctions = auction.detailAuction(code)) != null){//apresenta
+                            ArrayList<Message> message;
+                            if((message = auction.getMessages(auctions)) != null) {
+                                session.put("auction", auctions);
+                                session.put("messages", message);
+                            }
+                            return "detailauction";
+                        }
+                    }
+                }else {
+                    return "stay";
                 }
-            }else
-            {
-                return "stay";
+            }else {
+                return "login";
             }
-        } else {
-            return "noservice";
         }
+        return "noservice";
     }
 
 

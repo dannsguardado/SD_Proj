@@ -9,14 +9,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-
-
 import java.sql.*;
-import java.sql.Connection;
-import java.sql.Date;
 import java.util.*;
-
-import static java.lang.Thread.sleep;
 
 public class RMIServer implements RMI {
 
@@ -149,6 +143,71 @@ public class RMIServer implements RMI {
             }
         }
     }
+
+    public boolean loginFacebook(String idFacebook, String tokenFacebook, String username){
+        try {
+            if(username == null)
+            {
+                Users user = new Users(idFacebook,idFacebook);
+                register(user);
+                username = idFacebook;
+            }
+            query = "UPDATE user SET idFacebook= ?, tokenFacebook = ? WHERE nameuser = ? ";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, idFacebook);
+            preparedStatement.setString(2, tokenFacebook);
+            preparedStatement.setString(3, username);
+            preparedStatement.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public Users removeFacebook(Users user){
+        try{
+            query = "UPDATE user SET idFacebook= ?, tokenFacebook = ? WHERE nameuser = ? ";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, null);
+            preparedStatement.setString(2, "");
+            preparedStatement.setString(3, user.getName());
+            preparedStatement.executeUpdate();
+            user.setIdFacebook(null);
+            user.setTokenFacebook(null);
+            return user;
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Users getIDFacebook(Users user){
+        try {
+            query = "SELECT nameuser, passworduser, isadminuser, banuser, idfacebook, tokenfacebook FROM user WHERE nameuser=? AND passworduser=?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, user.getName());
+            preparedStatement.setString(2, user.getPassword());
+            ResultSet rs = preparedStatement.executeQuery();
+            if(rs.next()) {
+                Users newUser = new Users(user.getName(), rs.getInt("banuser"),user.getPassword());
+                newUser.setIsAdmin(rs.getInt("isadminuser"));
+                logs(newUser, 1);
+                newUser.setIdFacebook(rs.getString("idfacebook"));
+                newUser.setTokenFacebook(rs.getString("tokenfacebook"));
+                System.out.println(user.getTokenFacebook());
+                System.out.println("\nLogin de "+user.getName());
+                return newUser;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
     public void updateActiveAuctions(){
 
             try {
@@ -162,9 +221,23 @@ public class RMIServer implements RMI {
 
     }
 
+    public boolean createNotification(String username, long auctionid){
+        try {
+            query = "INSERT INTO notification (username,auctionid) VALUES (?,?)";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, username);
+            preparedStatement.setLong(2, auctionid);
+            preparedStatement.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public void lastAcessRegister(Users user){
         try{
-            System.out.println("actualizou");
             query = "UPDATE user SET lastacessuser = now() WHERE nameuser = ?";
             preparedStatement = conn.prepareStatement(query);
             preparedStatement.setString(1, user.getName());
@@ -226,12 +299,13 @@ public class RMIServer implements RMI {
                 return new Users((-1));
             }
 
-            query = "INSERT INTO user (nameuser,passworduser, isadminuser, banuser) VALUES (?,?,?,?)";
+            query = "INSERT INTO user (nameuser,passworduser, isadminuser, banuser, isliveuser) VALUES (?,?,?,?,?)";
             preparedStatement = conn.prepareStatement(query);
             preparedStatement.setString(1, user.getName());
             preparedStatement.setString(2, user.getPassword());
             preparedStatement.setInt(3, user.getIsAdmin());
             preparedStatement.setInt(4, 0);
+            preparedStatement.setInt(5, 1);
             preparedStatement.executeUpdate();
             System.out.println("\nRegisto de "+user.getName());
             return user;
@@ -244,7 +318,7 @@ public class RMIServer implements RMI {
     }
 
     public Auctions create(Auctions auction, int id, boolean idcheck){
-        System.out.println("\nCriação de leilao"); //ATENCAO AS DATAS
+        System.out.println("\nCriação de leilao");
         try {
             query = "INSERT INTO leilao (idartigoleilao,datacriacaoleilao,dataterminoleilao,ativoleilao, tituloleilao, descricaoleilao, precomaximoleilao, user_nameuser) VALUES (?,?,?,?,?,?,?,?)";
             preparedStatement = conn.prepareStatement(query);
@@ -255,7 +329,7 @@ public class RMIServer implements RMI {
             preparedStatement.setString(5, auction.getTitle());
             preparedStatement.setString(6, auction.getDescription());
             preparedStatement.setFloat(7, auction.getAmount());
-            preparedStatement.setString(8, auction.getAuction_username());
+            preparedStatement.setString(8, auction.getName());
             preparedStatement.executeUpdate();
 
             if (idcheck){
@@ -275,11 +349,8 @@ public class RMIServer implements RMI {
             preparedStatement = conn.prepareStatement(query);
             preparedStatement.setLong(1, auction.getCode());
             preparedStatement.setString(2, auction.getTitle());
-           /* preparedStatement.setString(3, auction.getDescription());
-            preparedStatement.setFloat(4, auction.getAmount());
-            preparedStatement.setString(5, auction.getAuction_username());*/
             ResultSet rs = preparedStatement.executeQuery();
-            System.out.println("correu bem");
+
             if(rs.next()){
                 auction.setAuctionID(rs.getInt("idleilao"));
                 return auction;
@@ -287,7 +358,6 @@ public class RMIServer implements RMI {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        System.out.println("deu mrd");
         return null;
     }
 
@@ -301,7 +371,7 @@ public class RMIServer implements RMI {
             ResultSet rs = preparedStatement.executeQuery();
 
             while(rs.next()) {
-                auctions.add(new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao"), new java.sql.Timestamp ( rs.getLong("dataterminoleilao"))));
+                auctions.add(new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao"), new java.sql.Timestamp(rs.getLong("datacriacaoleilao")), new java.sql.Timestamp ( rs.getLong("dataterminoleilao"))));
             }
             if(auctions.size()!=0){
                 return auctions;
@@ -324,7 +394,9 @@ public class RMIServer implements RMI {
             ResultSet rs = preparedStatement.executeQuery();
             if(rs.next())
             {
-                auction= new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao"), new java.sql.Timestamp(rs.getLong("dataterminoleilao")));
+                java.sql.Timestamp dataCriacao =  java.sql.Timestamp.valueOf (rs.getString("datacriacaoleilao"));
+                java.sql.Timestamp dataLimite =  java.sql.Timestamp.valueOf (rs.getString("dataterminoleilao"));
+                auction= new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao"), dataCriacao, dataLimite);
             }
 
             return auction;
@@ -344,9 +416,8 @@ public class RMIServer implements RMI {
             ResultSet rs = preparedStatement.executeQuery();
 
             while(rs.next()) {
-                    auctions.add(new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao"), new java.sql.Timestamp ( rs.getLong("dataterminoleilao"))));
+                    auctions.add(new Auctions(rs.getLong("idartigoleilao"), rs.getString("tituloleilao"), rs.getString("descricaoleilao"), rs.getFloat("precomaximoleilao"), rs.getString("user_nameuser"), rs.getInt("idleilao"), new java.sql.Timestamp ( rs.getLong("datacriacaoleilao")) , new java.sql.Timestamp ( rs.getLong("dataterminoleilao"))));
             }
-            System.out.println(auctions.size());
             if(auctions.size()!=0){
                 return auctions;
             }
@@ -358,36 +429,41 @@ public class RMIServer implements RMI {
         return null;
     }
     public Auctions editAuction(Auctions auction, HashMap<String, String> info){
-        System.out.println("Editar leilao ");
+        Auctions auctions = null;
         try {
             if(info.get("deadline")!=null){
-                System.out.println("editar deadline para"+ info + " com id ");//auction.getAuctionID());
                 query = "UPDATE leilao SET dataterminoleilao = ? WHERE idleilao = ? ";
                 preparedStatement = conn.prepareStatement(query);
-                Timestamp dataLimite =  java.sql.Timestamp.valueOf (info.get("deadline").concat(":0"));
+                java.sql.Timestamp dataLimite =  java.sql.Timestamp.valueOf (info.get("deadline").concat(":00"));
                 preparedStatement.setTimestamp(1,dataLimite);
-
+                auction.setDeadline(dataLimite);
+                auctions = auction;
             }
             else if(info.get("amount")!=null) {
-                System.out.println("editou");
                 query = "UPDATE leilao SET precomaximoleilao = ? WHERE idleilao = ? ";
                 preparedStatement = conn.prepareStatement(query);
                 preparedStatement.setFloat(1, Float.parseFloat(info.get("amount")));
+                auction.setAmount(Float.parseFloat(info.get("amount")));
+                auctions = auction;
             }
             else if(info.get("description")!=null) {
                 query = "UPDATE leilao SET descricaoleilao = ? WHERE idleilao = ? ";
                 preparedStatement = conn.prepareStatement(query);
                 preparedStatement.setString(1, info.get("description"));
+                auction.setDescription(info.get("description"));
+                auctions = auction;
             }
             else if(info.get("title")!=null) {
                 query = "UPDATE leilao SET tituloleilao = ? WHERE idleilao = ? ";
                 preparedStatement = conn.prepareStatement(query);
                 preparedStatement.setString(1, info.get("title"));
+                auction.setTitle(info.get("title"));
+                auctions = auction;
             }
 
             preparedStatement.setInt(2, auction.getAuctionID());
             preparedStatement.executeUpdate();
-            return auction;
+            return auctions;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -395,7 +471,7 @@ public class RMIServer implements RMI {
     }
 
     public ArrayList<Users> onlineUsers(){
-        System.out.println("Search leilao");
+        System.out.println("Online Users");
         ArrayList<Users> users = new ArrayList<Users>();
         try {
             query = "SELECT * FROM user WHERE isliveuser = ?";
@@ -423,6 +499,8 @@ public class RMIServer implements RMI {
 
             preparedStatement.setInt(2, auction.getAuctionID());
             preparedStatement.executeUpdate();
+            auction.setAtivo(0);
+
             return auction;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -458,7 +536,7 @@ public class RMIServer implements RMI {
         System.out.println("\nCriação de licitacao");
         if(detail(idLeilao).getAtivo()== 1){ // protecao de valor de bid ja ultrapassado e leilao activo
             Bid bid = bestBid(idLeilao);
-            System.out.println("leilao ativo");
+
             if(bid==null){
                 return createBid(username, idLeilao, amount);
             }
@@ -479,12 +557,10 @@ public class RMIServer implements RMI {
             preparedStatement.setString(1, username);
             ResultSet rs = preparedStatement.executeQuery();
             while(rs.next()){
-                System.out.println("verificar leilao de id " + rs.getInt("leilao_idleilao"));
                 String query1 = "(SELECT l.user_nameuser, l.valorlicitacao FROM licitacao l WHERE l.valorlicitacao = ? AND ((SELECT u.lastacessuser FROM user u WHERE u.nameuser = ? AND isliveuser = 1) < l.datalicitacao))";
                 preparedStatement1 = conn.prepareStatement(query1);
                 preparedStatement1.setFloat(1, bestBid(rs.getLong("leilao_idleilao")).getValor());
                 preparedStatement1.setString(2,username);
-                // System.out.println("A melhor lcitacao é " + bestBid(rs.getLong("leilao_idleilao")).getIdLeilao());
                 ResultSet rs1 = preparedStatement1.executeQuery();
                 if(rs1.next()){
                     if (aux==null)aux="";
@@ -629,7 +705,7 @@ public class RMIServer implements RMI {
         return null;
     }
     public Message createMessage(String mensagem, long idleilao, String username){
-        System.out.println("ENSAGEM");
+        System.out.println("MENSAGEM");
         try {
             query = "INSERT INTO mensagem (conteudomensagem, user_nameuser,leilao_idleilao) VALUES (?,?,?)";
             preparedStatement = conn.prepareStatement(query);
@@ -637,7 +713,6 @@ public class RMIServer implements RMI {
             preparedStatement.setString(2, username);
             preparedStatement.setLong(3, idleilao);
             preparedStatement.executeUpdate();
-            System.out.println("Messagem realizada");
             Message message = new Message(mensagem, username, idleilao);
             return message;
         } catch (SQLException e) {

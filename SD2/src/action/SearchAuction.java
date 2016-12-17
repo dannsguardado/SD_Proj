@@ -2,14 +2,11 @@ package action;
 
 import com.opensymphony.xwork2.ActionSupport;
 import model.Auctions;
-import model.Message;
 import model.SessionModel;
 import org.apache.struts2.interceptor.SessionAware;
 
 import java.util.ArrayList;
 import java.util.Map;
-
-import static com.sun.org.apache.xml.internal.serializer.utils.Utils.messages;
 
 /**
  * Created by ritaalmeida on 28/11/16.
@@ -26,27 +23,24 @@ public class SearchAuction extends ActionSupport implements SessionAware {
 
     public String execute() {
         SessionModel auction = getModel();
-        session.remove("auction");
+        session.remove("auctions");
         if (auction.getRmiConnection() != null) {
-            ArrayList<Auctions> auctions = null;
-            if (code != 0) {
-                if ((auctions = auction.searchAuction(code)) != null) {
-                    session.put("auction", auctions.get(0)); // retirar o get(0) e acrescentar no jsp o foreach
-                    return "listauctions";
-                } else {
-                    return "login";
+            if(session.get("user")!=null) {
+                ArrayList<Auctions> auctions;
+                if (code != 0) {
+                    if ((auctions = auction.searchAuction(code)) != null) {
+                        session.put("auctions", auctions);
+                        return "listauctions";
+                    }
+                }else
+                {
+                    return "stay";
                 }
-            }else
-            {
-                return "stay";
+            }else {
+                return "login";
             }
-
-
-        } else {
-            return "noservice";
         }
-
-
+        return "noservice";
     }
 
     public SessionModel getModel() {

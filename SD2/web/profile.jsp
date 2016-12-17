@@ -5,74 +5,115 @@
 
 <head>
 
-    <title>Second Bar Header</title>
+    <title>Home</title>
 
     <link rel="stylesheet" href="css/demo.css">
     <link rel="stylesheet" href="css/header-second-bar.css">
+    <div class="header-two-bars">
+
+        <div class="header-first-bar">
+
+            <div class="header-limiter">
+
+                <h1><a href="#">I<span>bei</span></a></h1>
+                <nav>
+                    <div class="button">
+                        <form action="createpage">
+                            <button type="submit">Send Message</button>
+                        </form>
+                        <form action="createpage">
+                            <button type="submit">My Messages</button>
+                        </form>
+                    </div>
+                </nav>
+
+                <div class="buttonLog">
+                    <form name = "logout" action="logout">
+                        <button type="submit">Logout</button>
+                    </form>
+
+                    <form id="facebook_form" method="post">
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="header-second-bar">
+
+            <div class="header-limiter">
+                <h2><a href="#">Welcome <c:out value="${user.getUser().getName()}"/></a></h2>
+
+                <div class="button">
+
+                    <form action="searchpage">
+                        <button type="submit">Search Auction</button>
+                    </form>
+                    <form action="detailpage">
+                        <button type="submit">Detail Auction</button>
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
 
 </head>
 
 <body>
-
-<header class="header-two-bars">
-
-    <div class="header-first-bar">
-
-        <div class="header-limiter">
-
-            <h1><a href="#">I<span>bei</span></a></h1>
-
-            <nav>
-                <a href="#">MyBids</a>
-                <a href="#" class="selected">MyAuctions</a>
-                <a href="#">cena</a>
-                <a href="#">cena</a>
-            </nav>
-
-            <a href="#" class="logout-button">Logout</a>
-        </div>
-
-    </div>
-
-    <div class="header-second-bar">
-
-        <div class="header-limiter">
-            <h2><a href="#">Welcome <c:out value="${user.getUser().getName()}"/></a></h2>
-
-            <nav>
-                <form action="createpage">
-                    <button type="submit">New Auction</button>
-                </form>
-                <form action="detailpage.jsp">
-                    <button type="submit">Detail Auction</button>
-                </form>
-                <form action="banuserpage">
-                    <button type="submit">Ban User</button>
-                </form>
-            </nav>
-
-        </div>
-
-    </div>
-
-</header>
-
 <div class="menu">
 
 
     <h1>Ibei - the best way to make easy money</h1>
+    <nav>
+        <div class="button">
 
-    <ul>
-        <li><a href="#">Make bid</a></li>
-        <li><a href="#">New Auction</a></li>
-        <li><a href="#">My auctions</a></li>
-        <li><a href="#">Search auctions</a></li>
-        <li><a href="#">Search product</a></li>
-        <li><a href="#" class="active">Message</a></li>
-    </ul>
+            <form action="createpage">
+                <button type="submit">New Auction</button>
+            </form>
+            <form action="searchpage">
+                <button type="submit">Search Auction</button>
+            </form>
+            <form action="detailpage">
+                <button type="submit">Detail Auction</button>
+            </form>
+            <form action="myauctions">
+                <button type="submit">My Auctions</button>
+            </form>
+            <form action="createbidpage">
+                <button type="submit">Create Bid</button>
+            </form>
+            <form action="editauctionpage">
+                <button type="submit">Edit Auction</button>
+            </form>
+            <form action="messageauctionpage">
+                <button type="submit">Message Auction</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="info">
+        <p>Escolha uma opção</p>
+
+    </div>
 
 </div>
+<!--
+<script>
+    window.addEventListener("onbeforeunload", function() {
+            document.logoutform.submit();
+    });
+</script> -->
 
+<script src="js/social.js"></script>
+<script type="text/javascript">
+    window.onload = change_button_on_load(${user.getUser().getIdFacebook()});
+</script>
 </body>
-
 </html>

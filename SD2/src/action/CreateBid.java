@@ -1,10 +1,13 @@
 package action;
 
 import com.opensymphony.xwork2.ActionSupport;
+import model.Auctions;
+import model.Bid;
+import model.Message;
 import model.SessionModel;
 import org.apache.struts2.interceptor.SessionAware;
 
-import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -24,16 +27,37 @@ public class CreateBid extends ActionSupport implements SessionAware {
 
     public String execute() {
         SessionModel auction = getModel();
+        session.remove("auctions");
+        session.remove("messages");
+        session.remove("bids");
+        session.remove("bestbid");
         if (auction.getRmiConnection() != null) {
-            if (code != 0 && amount != 0 ) {
-                if (auction.createBid(code, amount) != null) {
-                    return "success";
-                } else {
-                    return "login";
+            if(session.get("user")!=null){
+
+                if (code != 0 && amount != 0 ) {
+                    if (auction.createBid(code, amount) != null) {
+                        Auctions auctions;
+                        if((auctions = auction.detailAuction(code)) != null) {
+                            session.put("auction", auctions);
+                            ArrayList<Message> message;
+                            if ((message = auction.getMessages(auctions)) != null) {
+                                session.put("messages", message);
+                            }
+                            ArrayList<Bid> bids;
+                            if ((bids = auction.getBids(auctions)) != null) {
+                                session.put("bids", bids);
+                                Bid best;
+                                if ((best = auction.getBestBid(code)) != null) {
+                                    session.put("bestbid", best);
+                                }
+                            }
+                        }
+                        return "success";
+                    }
                 }
-            }else
-            {
                 return "stay";
+            }else {
+                return "login";
             }
         } else {
             return "noservice";

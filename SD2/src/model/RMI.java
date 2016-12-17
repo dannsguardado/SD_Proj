@@ -34,4 +34,9 @@ public interface RMI extends Remote{
     public void updateActiveAuctions() throws RemoteException;
     public void lastAcessRegister(Users user) throws  RemoteException;
     public String onlineNotification(String username) throws  RemoteException;
+    public Bid bestBid(long id) throws RemoteException;
+    boolean createNotification(String username, long auctionid) throws RemoteException;
+    public Users removeFacebook(Users user) throws RemoteException;
+    public boolean loginFacebook(String idFacebook, String tokenFacebook, String username) throws RemoteException;
+    public Users getIDFacebook(Users user) throws RemoteException;
 }
