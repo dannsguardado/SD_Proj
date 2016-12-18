@@ -29,18 +29,18 @@ function onOpen(event) {
 }
 function onClose(event) {
     writeToHistory('WebSocket closed . ');
-    document.getElementById('chat').onkeydown = null ;
+    document.getElementById('chat').onkeydown = null;
 }
 function onMessage(message){ // print the received message
     writeToHistory(message.data);
 }
 function onError(event){
     writeToHistory(' WebSocket   error  ( ' + event.data + '). ');
-    document.getElementById('chat').onkeydown = null ;
+    document.getElementById('chat').onkeydown = null;
 }
 
 function doSend () {
-    var message = document.getElementById('chat').value ;
+    var message = document.getElementById('chat').value;
     if (message!= '')
         websocket.send(message); // send the message
     document.getElementById('chat').value = '';
