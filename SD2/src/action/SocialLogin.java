@@ -67,6 +67,9 @@ public class SocialLogin extends ActionSupport implements SessionAware {
                     System.out.println("lol");
                     user.setUser(user.getIDFacebook(user.getUser()));
                     session.put("user", user);
+                    if(user.getUser().getIsAdmin()==1){
+                        return "admin";
+                    }
                     return "success";
                 }
             }
@@ -77,6 +80,9 @@ public class SocialLogin extends ActionSupport implements SessionAware {
 
                     user.setUser(new_user);
                     session.put("user", user);
+                    if(user.getUser().getIsAdmin()==1){
+                        return "admin";
+                    }
                     return "success";
                 }
             }

@@ -37,8 +37,14 @@ public class Login extends ActionSupport implements SessionAware {
 
             if (username != null && password != null) {
                 if (user.login(username, password)) {
+
                     user.setUser(user.getIDFacebook(user.getUser()));
                     session.put("user", user);
+
+                    if(user.getUser().getIsAdmin()==1){
+                        return "admin";
+                    }
+
                     return "success";
                 } else {
                     return "login";
@@ -70,20 +76,6 @@ public class Login extends ActionSupport implements SessionAware {
 
                 return "authorization";
             }
-            /*else if(loginType != null && loginType.matches("login"))
-            {
-                if(user.login(username, password)==false)
-                {
-                    System.out.println("Não existe na bd -> a fazer registo...");
-                    if(user.register(username, username)!=false)
-                    {
-
-                        session.put("user", user);
-                        return "success";
-                    }
-                }
-                return "success";
-            }*/
         }
         else {
             return "stay";
