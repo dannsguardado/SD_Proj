@@ -1,15 +1,10 @@
 package action;
 
 import com.opensymphony.xwork2.ActionSupport;
-import model.Auctions;
-import model.Message;
 import model.SessionModel;
 import org.apache.struts2.interceptor.SessionAware;
 
-import java.util.ArrayList;
 import java.util.Map;
-
-import static com.sun.org.apache.xml.internal.serializer.utils.Utils.messages;
 
 /**
  * Created by ritaalmeida on 28/11/16.
@@ -60,7 +55,7 @@ public class BanUser extends ActionSupport implements SessionAware {
         return username;
     }
     public void setUsername(String username) {
-         this.username = username;
+        this.username = username;
     }
 
     public void setSessionModel(SessionModel model) {

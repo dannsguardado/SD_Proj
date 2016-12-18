@@ -30,6 +30,7 @@ public class EditAuction extends ActionSupport implements SessionAware {
         HashMap<String, String> info = new HashMap<>();
         if (auction.getRmiConnection() != null) {
             if(session.get("user")!=null) {
+                info.put("username", ((SessionModel) session.get("user")).getUser().getName());
                 if (title != null) {
                     info.put("title", title);
                     if ((auctions = auction.editAuction(auctions.getAuctionID(), info)) != null) {
