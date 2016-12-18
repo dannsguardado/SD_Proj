@@ -39,4 +39,5 @@ public interface RMI extends Remote{
     public Users removeFacebook(Users user) throws RemoteException;
     public boolean loginFacebook(String idFacebook, String tokenFacebook, String username) throws RemoteException;
     public Users getIDFacebook(Users user) throws RemoteException;
+    public Users getMyIDFacebook(String id) throws  RemoteException;
 }

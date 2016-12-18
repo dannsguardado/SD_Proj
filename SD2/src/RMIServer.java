@@ -146,14 +146,6 @@ public class RMIServer implements RMI {
 
     public boolean loginFacebook(String idFacebook, String tokenFacebook, String username){
         try {
-            if(username == null)
-            {
-                Users user = new Users(username,idFacebook);
-                System.out.println("--------> USER: " + user);
-                register(user);
-
-                //username = idFacebook;
-            }
             query = "UPDATE user SET idFacebook= ?, tokenFacebook = ? WHERE nameuser = ? ";
             preparedStatement = conn.prepareStatement(query);
             preparedStatement.setString(1, idFacebook);
@@ -209,6 +201,27 @@ public class RMIServer implements RMI {
         return null;
     }
 
+    public Users getMyIDFacebook(String id){
+        try {
+            System.out.println(id);
+            query = "SELECT nameuser, passworduser, isadminuser, banuser, tokenfacebook FROM user WHERE idfacebook=?";
+            preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, id);
+            ResultSet rs = preparedStatement.executeQuery();
+            if(rs.next()) {
+                Users newUser = new Users(rs.getString("nameuser"), rs.getInt("banuser"),rs.getString("passworduser"));
+                newUser.setIsAdmin(rs.getInt("isadminuser"));
+                logs(newUser, 1);
+                newUser.setIdFacebook(id);
+                newUser.setTokenFacebook(rs.getString("tokenfacebook"));
+                System.out.println(newUser.getName());
+                return newUser;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     public void updateActiveAuctions(){
 

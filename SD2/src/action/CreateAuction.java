@@ -41,35 +41,46 @@ public class CreateAuction extends ActionSupport implements SessionAware {
         session.remove("bids");
         session.remove("bestbid");
         if (auction.getRmiConnection() != null) {
+
             if (code != 0 && title != null && amount != 0 && datalimite != null) {
                 Timestamp dataLimite =  java.sql.Timestamp.valueOf (datalimite.concat(":00"));
                 Auctions auctions;
+
                 if ((auctions = auction.createAuction(code, title, description, amount, dataLimite)) != null) {
                     session.put("auction", auctions);
 
-                    OAuthService service;
-                    String User_id = auction.getUser().getIdFacebook();
+                    if(auction.getUser().getIdFacebook() != null) {
+                        OAuthService service;
+                        String User_id = auction.getUser().getIdFacebook();
+                        System.out.println("user_id: " + auction.getUser().getIdFacebook());
 
-                    service = (OAuthService) session.get("service");
-                    try {
-                        OAuthRequest request = new OAuthRequest(Verb.POST, PROTECTED_RESOURCE_URL + User_id + "/feed", service);
-                        String token = auction.getUser().getTokenFacebook();
-                        String key = "s";
-                        System.out.println("token: " + token);
-                        Token accessToken = new Token(token, key);
-                        service.signRequest(accessToken, request);
+                        service = (OAuthService) session.get("service");
+                        try {
+                            OAuthRequest request = new OAuthRequest(Verb.POST, PROTECTED_RESOURCE_URL + User_id + "/feed", service);
 
-                        request.addBodyParameter("message", "http://localhost:8080/detailauction?id="+auctions.getAuctionID()+ "/");
+                            String token = auction.getUser().getTokenFacebook();
 
-                        Response response = request.send();
-                        System.out.println("Got it! Lets see what we found...");
-                        System.out.println("HTTP RESPONSE: =============");
-                        System.out.println(response.getCode());
-                        System.out.println(response.getBody());
-                        System.out.println("END RESPONSE ===============");
+                            System.out.println("lol: user: " + auction.getUser().getName());
+                            System.out.println("oiii: " + auction.getUser().getTokenFacebook());
 
-                    } catch (OAuthException e) {
-                        e.printStackTrace();
+                            String key = "s";
+                            System.out.println("token: " + token);
+                            Token accessToken = new Token(token, key);
+                            service.signRequest(accessToken, request);
+
+                            request.addBodyParameter("message", "http://localhost:8080/detailauction?id=" + auctions.getAuctionID() + "/");
+
+                            Response response = request.send();
+                            System.out.println("Got it! Lets see what we found...");
+                            System.out.println("HTTP RESPONSE: =============");
+                            System.out.println(response.getCode());
+                            System.out.println(response.getBody());
+                            System.out.println("END RESPONSE ===============");
+
+                        } catch (OAuthException e) {
+                            e.printStackTrace();
+                        }
+                        return "success";
                     }
                     return "success";
                 } else {

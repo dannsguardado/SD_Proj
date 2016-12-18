@@ -61,7 +61,7 @@ public class SocialLogin extends ActionSupport implements SessionAware {
             String tokenFacebook = accessToken.toString();
             tokenFacebook = tokenFacebook.replace("Token[", "").replace(" , ]","");
 
-
+            Users new_user =null;
             if(user.getUser()!=null) {
                 if (user.loginFacebook(id, tokenFacebook, user.getUser().getName()) != false) {
                     System.out.println("lol");
@@ -72,19 +72,18 @@ public class SocialLogin extends ActionSupport implements SessionAware {
             }
             else
             {
-                if (user.loginFacebook(id, tokenFacebook, username) != false) {
+                if ((new_user=user.getMyIDFacebook(id)) != null) {
                     System.out.println("lel");
-                    user.setUser((new Users(username, id)));
-                    user.register(username, id);
+
+                    user.setUser(new_user);
                     session.put("user", user);
-                    System.out.println("USER : " + user);
                     return "success";
                 }
             }
             session.put("user", user);
-            return "success";
+            return "stay";
         }
-        return "cenas";
+        return "noservice";
     }
 
 

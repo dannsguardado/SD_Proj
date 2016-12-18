@@ -34,7 +34,6 @@
 
             </div>
 
-            <%--<form id="facebook_form" method="post"></form>--%>
             <form method="post" action="login">
                 <input id="loginType" type="text" value="facebook" name="LoginType" hidden="">
                 <button type="submit" method="execute" class="btn btn-block btn-primary btn-facebook">

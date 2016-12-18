@@ -85,9 +85,19 @@ public class SessionModel implements Serializable {
         return false;
     }
 
+
     public Users getIDFacebook(Users user){
         try {
             return rmiConnection.getIDFacebook(user);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Users getMyIDFacebook(String id){
+        try {
+            return rmiConnection.getMyIDFacebook(id);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
